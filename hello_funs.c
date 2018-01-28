@@ -8,12 +8,32 @@
 int init_storage()
 {
     // Function to initialize memory as free_blks emulator
-    int mem_size = NUM_BLKS * BLK_SIZE * 2; // 2 because one for data one for pointer to next block, if any
-    free_blks = (int *)calloc(sizeof(int), mem_size/sizeof(int));
+    printf("Initing storage..\n");
+
+    int mem_size = NUM_BLKS * BLK_SIZE; // 2 because one for data one for pointer to next block, if any
+    free_blks = (block *)calloc(sizeof(block), mem_size/sizeof(block));
+
+    block *temp = free_blks; // local variable
+    int i=0; // local counter
+
+    // initialize every block to point to the next block
+    while(i++ < NUM_BLKS-2)
+    {
+        temp->next = temp+1;
+        temp = temp+1;
+    }
+    temp = temp +1;
+    temp->next = EOM_PTR; // last block in memory can't point to anything
+
     if(free_blks == NULL)
     {
         printf("init_storage: Allocation of memory failed!");
         return -1;
     }
+
+    
+
     return 1;
+
+
 }

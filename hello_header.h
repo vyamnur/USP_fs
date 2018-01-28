@@ -6,37 +6,43 @@
 #define USP_FS_HELLO_HEADER_H
 
 #include <stdlib.h>
-#include<stdio.h>
+#include <stdio.h>
 
-#ty BLK_DATA_TYPE
+typedef char BLK_DATA_TYPE;
+
 #define NUM_BLKS 1000
-#define BLK_SIZE sizeof(int)
-#define EOF_PTR -1
-
+#define BLK_SIZE sizeof(block)
+#define EOM_PTR -1
+#define MAX_PATH_LEN 252
 
 int init_storage();
 
-typedef struct inode
-{
-    // inode like struct
-    // file name
-    // inode like number
-    // is_dir
-    // link to parent (inode)  -- if dir
-    // link to children (inode)
-    // Pointer to head block
-    // st_mode
-    // st_nlink
-    // st_size (remember to update this)
-}inode;
 
 typedef struct block
 {
-    char data;
-    block *next;
+    BLK_DATA_TYPE data[1024];
+    struct block *next;
 }block;
 
 
-static int *free_blks;
+typedef struct inode
+{
+    char *name;
+    int i_num;
+    int is_dir=0;
+
+    struct inode *parent;
+    struct inode *children;
+
+    int st_size;
+    int st_nlink;
+    block *head;
+
+
+}inode;
+
+inode root;
+static block *free_blks;
+static int inode_ctr=0;
 
 #endif //USP_FS_HELLO_HEADER_H

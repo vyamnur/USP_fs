@@ -30,10 +30,27 @@ static const char *hello_path = "/hello";
 
 
 
+static int hello_mkdir(const char *path_name, mode_t mode)
+{
+    inode new_dir;
+
+    char path[MAX_PATH_LEN];
+    strncpy(path, path_name, MAX_PATH_LEN);
+
+    if (path == NULL)
+    {
+        printf(stderr, "error: path = NULL during mkdir\n");
+        return -1;
+    }
+    new_dir.i_num = inode_ctr++;
+    new_dir.children = (inode *)calloc(sizeof(inode),10);
+    new_dir.is_dir = 1;
+    // new_dir.parent = parse path to get parent
+    new_dir.st_nlink =2;
 
 
+}
 
-// Pointer to head of free blocks
 
 
 static int hello_getattr(const char *path, struct stat *stbuf)
