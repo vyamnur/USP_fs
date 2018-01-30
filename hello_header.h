@@ -14,7 +14,7 @@ typedef char BLK_DATA_TYPE;
 #define BLK_SIZE sizeof(block)
 #define EOM_PTR -1
 #define MAX_PATH_LEN 252
-
+#define MAX_CHILDREN 10
 int init_storage();
 
 
@@ -29,10 +29,10 @@ typedef struct inode
 {
     char *name;
     int i_num;
-    int is_dir=0;
+    int is_dir;
 
     struct inode *parent;
-    struct inode *children;
+    struct inode *children[MAX_CHILDREN];
 
     int st_size;
     int st_nlink;
@@ -41,7 +41,7 @@ typedef struct inode
 
 }inode;
 
-inode root;
+static inode root;
 static block *free_blks;
 static int inode_ctr=0;
 

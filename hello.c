@@ -43,7 +43,6 @@ static int hello_mkdir(const char *path_name, mode_t mode)
         return -1;
     }
     new_dir.i_num = inode_ctr++;
-    new_dir.children = (inode *)calloc(sizeof(inode),10);
     new_dir.is_dir = 1;
     // new_dir.parent = parse path to get parent
     new_dir.st_nlink =2;
@@ -59,6 +58,7 @@ static int hello_getattr(const char *path, struct stat *stbuf)
 
     memset(stbuf, 0, sizeof(struct stat));
     // file access modes, is wrong have  to fix
+    /* change all this
     if (strcmp(path, "/") == 0) {
         stbuf->st_mode = S_IFDIR | 0755;
         stbuf->st_nlink = 2;
@@ -68,7 +68,7 @@ static int hello_getattr(const char *path, struct stat *stbuf)
         stbuf->st_size = strlen(hello_str);
     } else
         res = -ENOENT;
-
+     */
     return res;
 }
 
@@ -131,7 +131,7 @@ static struct fuse_operations hello_oper = {
 
 int main(int argc, char *argv[])
 {
-    if(init_storage()==-1)
+    if(init_storage()==-1) // initialises storage and creates a root directory
     {
         return -1;
     }
