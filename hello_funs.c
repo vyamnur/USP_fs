@@ -31,6 +31,16 @@ int init_storage()
         return -1;
     }
 
+    // make root directory
+    root.name = (char *)malloc(5*sizeof(char));
+    root.name = 'root';
+    root.i_num = inode_ctr++;
+    root.is_dir = 1;
+    root.parent = &root;
+    root.st_nlink = 2;
+    root.st_size = 0;
+    root.head = NULL;
+    
     
 
     return 1;
