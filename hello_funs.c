@@ -71,21 +71,31 @@ struct inode *resolve_path(char *path, int is_dir) {
     char *dir_array[MAX_LEVEL];
     string = strdup(path);
 
-    printf("1..");
+    printf("1..path: %s\n", path);
 
     //Split path by '/' and store in an array
     int i = -2;
 
     while( (found = strsep(&string,"/")) != NULL ) {
         i++;
+        printf("%s", found);
         dir_array[i] = found;
     }
-    printf("dir_array: %s\n", dir_array[0]);
+
+
+
+    for(int k = 0; k <= i; k++) {
+        printf("Path %d: %s\n", k, dir_array[k]);
+    }
+
+
+//    printf("dir_array: %s\n", dir_array[0]);
+    printf("i: %d\n", i);
+
     if(i == 0) {
         return createChild(root, dir_array[0], is_dir);
     }
 
-    printf("i: %d\n", i);
 
     printf("2.. Added all to array\n");
 
@@ -113,7 +123,7 @@ struct inode *resolve_path(char *path, int is_dir) {
 struct inode *child_exists(struct inode *parent, char *child) {
     printf("Checking if child exists\n");
     if(!parent){
-        printf("Parent is null");
+        printf("Parent is null\n");
         return NULL;
     }
     if(parent->st_nlink < 3 || parent->is_dir != 1) {
@@ -122,11 +132,14 @@ struct inode *child_exists(struct inode *parent, char *child) {
     }
 
     struct inode* temp = parent->children[0];
-    for(int i = 1; i < parent->st_nlink - 2; i++){
+
+    printf("Checking for child: %s\n", child);
+
+    for(int i = 0; i <= parent->st_nlink - 2; i++){
         if(strcmp(temp->name, child) == 0)
             return temp;
     }
-
+    printf("Child not found\n");
     return NULL;
 }
 

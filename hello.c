@@ -31,6 +31,7 @@
 #include <string.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <zconf.h>
 #include "hello_header.h"
 
 static const char *hello_str = "Hello World!\n";
@@ -63,12 +64,10 @@ static int hello_mkdir(const char *path_name, mode_t mode)
     struct inode *temp = resolve_path(path, 1);
     printf("New dir name: %s\n", temp->name);
     return 0;
+
 }
 
-
-
-static int hello_getattr(const char *path, struct stat *stbuf)
-{
+static int hello_getattr(const char *path, struct stat *stbuf) {
     int res = 0;
 
     memset(stbuf, 0, sizeof(struct stat));
@@ -77,13 +76,42 @@ static int hello_getattr(const char *path, struct stat *stbuf)
     if (strcmp(path, "/") == 0) {
         stbuf->st_mode = S_IFDIR | 0755;
         stbuf->st_nlink = 2;
-    } else if (strcmp(path, hello_path) == 0) {
-        stbuf->st_mode = S_IFREG | 0444;
-        stbuf->st_nlink = 1;
-        stbuf->st_size = strlen(hello_str);
-    } else
-        res = -ENOENT;
 
+    } else if ((strcmp(path, "..") != 0) && (strcmp(path, ".") != 0)) {
+
+        char *string, *found;
+        char *dir_array[MAX_LEVEL];
+        string = strdup(path);
+        int i = -2;
+
+        while ((found = strsep(&string, "/")) != NULL) {
+            i++;
+            printf("%s", found);
+            dir_array[i] = found;
+        }
+
+        printf("hdsfjdsf: %s\n", dir_array[0]);
+
+        if (i > -1) {
+            struct inode *temp = root;
+            temp = child_exists(temp, dir_array[0]);
+            if (temp == NULL) {
+                printf("Blah\n");
+                res = -ENOENT;
+            } else {
+                printf("jhkjhkjhdfsdfsdf\n");
+                stbuf->st_mode = (temp->is_dir == 1)?(S_IFDIR| 0755):(S_IFREG | 0444);
+                stbuf->st_nlink = temp->st_nlink;
+                stbuf->st_size = 0;
+                stbuf->st_uid = getuid(); // The owner of the file/directory is the user who mounted the filesystem
+                stbuf->st_gid = getgid(); // The group of the file/directory is the same as the group of the user who mounted the filesystem
+                stbuf->st_atime = time( NULL ); // The last "a"ccess of the file/directory is right now
+                stbuf->st_mtime = time( NULL ); // The last "m"odification of the file/directory is right now
+            }
+        }
+    }
+    else
+        res = -ENOENT;
     return res;
 }
 
@@ -115,16 +143,7 @@ static int hello_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
     return 0;
 }
 
-static int hello_open(const char *path, struct fuse_file_info *fi)
-{
-    if (strcmp(path, hello_path) != 0)
-        return -ENOENT;
 
-    if ((fi->flags & 3) == O_RDWR || (fi->flags & 3) == 0)
-        return -EACCES;
-
-    return 0;
-}
 
 static int hello_read(const char *path, char *buf, size_t size, off_t offset,
                       struct fuse_file_info *fi)
@@ -145,21 +164,47 @@ static int hello_read(const char *path, char *buf, size_t size, off_t offset,
     return size;
 }
 
-
-static int hello_write(const char* path, char *buf, size_t size, off_t offset, struct fuse_file_info* fi)
+static int hello_open(const char* path, struct fuse_file_info* fi)
 {
+
+    printf("Opened a file! %s\n",path);
+
+    /*char *a = strdup(path);
+    inode *i = createChild(root, a+1, 0);
+    */
+    //printf("Open done: %s\n", i->name);
+
+    return 0;
+
+}
+
+static int hello_create(const char *path, mode_t mode, struct fuse_file_info *fi)
+{
+    printf("Created a file %s\n",path);
+
+    return hello_open(path,fi);
+}
+
+
+static int hello_write(const char *path, const char *buf, size_t size, off_t offset, struct fuse_file_info *fi)
+{
+
+    printf("beginning write!\n");
+    char *hj = strdup(path);
     // does not support negative offset!
     if(offset<0)
     {
-        return -1;
+        return 0;
     }
     // locate the file
-    inode *fil = resolve_path(path,0); // 0 becasue we dont want to create a dir
-    
+    //inode *fil = resolve_path(path,0); // 0 becasue we dont want to create a dir
+
+    inode *fil = createChild(root, hj+1 ,0); // 0 becasue we dont want to create a dir
+
     if(fil == NULL)
     {
         printf("Could not resolve path, in hello_write");
-        return -1;
+        return 0;
     }
     
     //new file, allocate memory and write
@@ -187,7 +232,7 @@ static int hello_write(const char* path, char *buf, size_t size, off_t offset, s
                 write_block->next = get_free_block();
                 if(write_block->next == NULL)
                 {
-                    return -1;
+                    return 0;
                 }
             }
             write_block = write_block->next;
@@ -209,7 +254,7 @@ static int hello_write(const char* path, char *buf, size_t size, off_t offset, s
             if(buf == NULL)
             {
                 write_block->data[write_blk_offset+blk_ctr] = '\0';
-                return 1; // done writing, return
+                return 0; // done writing, return
             }
             write_block->data[write_blk_offset+blk_ctr] = buf[0];
             buf = buf+1;
@@ -221,14 +266,14 @@ static int hello_write(const char* path, char *buf, size_t size, off_t offset, s
             write_block->next = get_free_block();
             if(write_block->next == NULL)
             {
-                return -1;
+                return 0;
             }
         }
         write_blk_offset = 0;
         write_block = write_block->next;
         
     }
-    return 1; // never reached
+    return 0; // never reached
 }
 
 
@@ -239,6 +284,7 @@ static struct fuse_operations hello_oper = {
         .read		= hello_read,
         .write      = hello_write,
         .mkdir      = hello_mkdir,
+        .create     = hello_create,
 };
 
 int main(int argc, char *argv[])
