@@ -7,6 +7,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 
 typedef char BLK_DATA_TYPE;
 
@@ -15,8 +16,9 @@ typedef char BLK_DATA_TYPE;
 #define EOM_PTR -1
 #define MAX_PATH_LEN 252
 #define MAX_CHILDREN 10
+#define MAX_LEVEL 10
 
-
+int init_storage();
 
 
 typedef struct block
@@ -42,14 +44,17 @@ typedef struct inode
 
 }inode;
 
-static inode *root;
-static block *free_blks;
-static int inode_ctr=0;
-
 /*------------------------------------ METHOD PROTOTYPES -------------------------------------*/
 int init_storage();
 block *get_free_block();
 
 
+struct inode *root;
+static block *free_blks;
+static int inode_ctr=0;
+
+struct inode *resolve_path(char *path, int is_dir);
+struct inode *child_exists(struct inode *parent, char *child);
+struct inode *createChild(struct inode *parent, char *child, int is_dir);
 
 #endif //USP_FS_HELLO_HEADER_H

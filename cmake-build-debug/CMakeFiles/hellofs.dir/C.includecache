@@ -1,0 +1,32 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/home/vyam/ClionProjects/USP_fs/hello.c
+fuse.h
+-
+stdio.h
+-
+string.h
+-
+errno.h
+-
+fcntl.h
+-
+hello_header.h
+/home/vyam/ClionProjects/USP_fs/hello_header.h
+
+/home/vyam/ClionProjects/USP_fs/hello_funs.c
+hello_header.h
+/home/vyam/ClionProjects/USP_fs/hello_header.h
+
+/home/vyam/ClionProjects/USP_fs/hello_header.h
+stdlib.h
+-
+stdio.h
+-
+

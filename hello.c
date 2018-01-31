@@ -5,13 +5,21 @@
   Copyright (C) 2001-2007  Miklos Szeredi <miklos@szeredi.hu>
   This program can be distributed under the terms of the GNU GPL.
   See the file COPYING.
-  gcc -Wall `pkg-config fuse --cflags --libs` hello.c -o hello
 
  **********************************************************************************
 
 	linked list approach to block management
  	One block for data, one block to point to next block of data
  	50% overhead !!
+
+ Build and execute:
+    gcc -c hello_funs.c && gcc -Wall hello_funs.o hello.c `pkg-config fuse --cflags --libs` -o hello
+    mkdir blah
+    ./hello -f blah
+
+ To unmount:
+    sudo umount -l blah
+
 
  */
 
@@ -29,10 +37,11 @@ static const char *hello_str = "Hello World!\n";
 static const char *hello_path = "/hello";
 
 
+extern struct inode *root;
 
 static int hello_mkdir(const char *path_name, mode_t mode)
 {
-    inode new_dir;
+    /*inode new_dir;
 
     char path[MAX_PATH_LEN];
     strncpy(path, path_name, MAX_PATH_LEN);
@@ -48,6 +57,12 @@ static int hello_mkdir(const char *path_name, mode_t mode)
     new_dir.st_nlink =2;
     return 1;
 
+    */
+    printf("root: %s\n", root->name);
+    char *path = path_name;
+    struct inode *temp = resolve_path(path, 1);
+    printf("New dir name: %s\n", temp->name);
+    return 0;
 }
 
 
@@ -58,7 +73,7 @@ static int hello_getattr(const char *path, struct stat *stbuf)
 
     memset(stbuf, 0, sizeof(struct stat));
     // file access modes, is wrong have  to fix
-    /* change all this
+    // change all this
     if (strcmp(path, "/") == 0) {
         stbuf->st_mode = S_IFDIR | 0755;
         stbuf->st_nlink = 2;
@@ -68,7 +83,7 @@ static int hello_getattr(const char *path, struct stat *stbuf)
         stbuf->st_size = strlen(hello_str);
     } else
         res = -ENOENT;
-     */
+
     return res;
 }
 
@@ -84,10 +99,18 @@ static int hello_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
     if (strcmp(path, "/") != 0)
         return -ENOENT;
     */
+
     filler(buf, ".", NULL, 0);
     filler(buf, "..", NULL, 0);
-    filler(buf, hello_path + 1, NULL, 0);
-    //filler(buf,"viky",NULL,0); // why NULL 0?
+
+    if(strcmp(path, "/") == 0 && root->st_nlink > 2) {
+        for(int i = 0; i < root->st_nlink - 2; i++){
+            //struct inode *temp = root->children[0];
+            //printf("Children: %d\n",temp);
+            filler(buf, root->children[i]->name, NULL, 0);
+        }
+    }
+
 
     return 0;
 }
@@ -97,7 +120,7 @@ static int hello_open(const char *path, struct fuse_file_info *fi)
     if (strcmp(path, hello_path) != 0)
         return -ENOENT;
 
-    if ((fi->flags & 3) == O_RDWR || (fi->flags & 3)== O_ )
+    if ((fi->flags & 3) == O_RDWR || (fi->flags & 3) == 0)
         return -EACCES;
 
     return 0;
@@ -133,7 +156,7 @@ static int hello_write(const char* path, char *buf, size_t size, off_t offset, s
     // locate the file
     inode *fil = resolve_path(path,0); // 0 becasue we dont want to create a dir
     
-    if(*fil == NULL)
+    if(fil == NULL)
     {
         printf("Could not resolve path, in hello_write");
         return -1;
@@ -155,9 +178,9 @@ static int hello_write(const char* path, char *buf, size_t size, off_t offset, s
     block *write_block = fil->head;
     while(offset>0)
     {
-        if(offset>sizeof(write_block.data))
+        if(offset>sizeof(write_block->data))
         {
-            offset -= sizeof(write_block.data);
+            offset -= sizeof(write_block->data);
             
             if(write_block->next == NULL)
             {
@@ -181,14 +204,14 @@ static int hello_write(const char* path, char *buf, size_t size, off_t offset, s
     while(buf!=NULL)
     {
         blk_ctr=0;
-        while(blk_ctr<sizeof(write_block.data))
+        while(blk_ctr<sizeof(write_block->data))
         {
             if(buf == NULL)
             {
-                write_block.data[write_blk_offset+blk_ctr] = '\0';
+                write_block->data[write_blk_offset+blk_ctr] = '\0';
                 return 1; // done writing, return
             }
-            write_block.data[write_blk_offset+blk_ctr] = buf[0];
+            write_block->data[write_blk_offset+blk_ctr] = buf[0];
             buf = buf+1;
             blk_ctr++;
         }
@@ -215,6 +238,7 @@ static struct fuse_operations hello_oper = {
         .open		= hello_open,
         .read		= hello_read,
         .write      = hello_write,
+        .mkdir      = hello_mkdir,
 };
 
 int main(int argc, char *argv[])

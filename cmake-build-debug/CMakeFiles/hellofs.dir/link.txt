@@ -1,0 +1,1 @@
+/usr/bin/cc  -l -D_FILE_OFFSET_BITS=64 -g   CMakeFiles/hellofs.dir/hello.c.o CMakeFiles/hellofs.dir/hello_funs.c.o  -o hellofs 
