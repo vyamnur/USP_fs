@@ -37,7 +37,7 @@ static int hello_mkdir(const char *path_name, mode_t mode)
     char path[MAX_PATH_LEN];
     strncpy(path, path_name, MAX_PATH_LEN);
 
-    if (path == NULL)
+    if (*path_name == NULL)
     {
         printf(stderr, "error: path = NULL during mkdir\n");
         return -1;
@@ -46,7 +46,7 @@ static int hello_mkdir(const char *path_name, mode_t mode)
     new_dir.is_dir = 1;
     // new_dir.parent = parse path to get parent
     new_dir.st_nlink =2;
-
+    return 1;
 
 }
 
@@ -97,7 +97,7 @@ static int hello_open(const char *path, struct fuse_file_info *fi)
     if (strcmp(path, hello_path) != 0)
         return -ENOENT;
 
-    if ((fi->flags & 3) != O_RDONLY)
+    if ((fi->flags & 3) == O_RDWR || (fi->flags & 3)== O_ )
         return -EACCES;
 
     return 0;
@@ -122,11 +122,99 @@ static int hello_read(const char *path, char *buf, size_t size, off_t offset,
     return size;
 }
 
+
+static int hello_write(const char* path, char *buf, size_t size, off_t offset, struct fuse_file_info* fi)
+{
+    // does not support negative offset!
+    if(offset<0)
+    {
+        return -1;
+    }
+    // locate the file
+    inode *fil = resolve_path(path,0); // 0 becasue we dont want to create a dir
+    
+    if(*fil == NULL)
+    {
+        printf("Could not resolve path, in hello_write");
+        return -1;
+    }
+    
+    //new file, allocate memory and write
+    if(fil->head == NULL)
+    {
+        fil->head = get_free_block();
+        if(fil->head == NULL)
+        {
+            //printf("Didn't get free block! in hello_write");
+            return -1;
+        }
+    }
+    
+    // seek to offset
+    int write_blk_offset = 0; //offset within a block
+    block *write_block = fil->head;
+    while(offset>0)
+    {
+        if(offset>sizeof(write_block.data))
+        {
+            offset -= sizeof(write_block.data);
+            
+            if(write_block->next == NULL)
+            {
+                write_block->next = get_free_block();
+                if(write_block->next == NULL)
+                {
+                    return -1;
+                }
+            }
+            write_block = write_block->next;
+        }
+        else
+        {
+            write_blk_offset = offset;
+            offset = 0;
+        }
+    }
+    
+    //start writing from buff
+    int blk_ctr;
+    while(buf!=NULL)
+    {
+        blk_ctr=0;
+        while(blk_ctr<sizeof(write_block.data))
+        {
+            if(buf == NULL)
+            {
+                write_block.data[write_blk_offset+blk_ctr] = '\0';
+                return 1; // done writing, return
+            }
+            write_block.data[write_blk_offset+blk_ctr] = buf[0];
+            buf = buf+1;
+            blk_ctr++;
+        }
+        // run out of blck go to next block
+        if(write_block->next == NULL)
+        {
+            write_block->next = get_free_block();
+            if(write_block->next == NULL)
+            {
+                return -1;
+            }
+        }
+        write_blk_offset = 0;
+        write_block = write_block->next;
+        
+    }
+    return 1; // never reached
+}
+
+
 static struct fuse_operations hello_oper = {
         .getattr	= hello_getattr,
         .readdir	= hello_readdir,
         .open		= hello_open,
         .read		= hello_read,
+        .write      = hello_write,
 };
 
 int main(int argc, char *argv[])

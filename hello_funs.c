@@ -5,6 +5,20 @@
 //
 
 
+block *get_free_block()
+{
+    if (*free_blks == NULL || *free_blks==EOM_PTR)
+    {
+        printf("Couldn't find free blocks! in get_free_block");
+        return NULL;
+    }
+    // move free_blks to next
+    block *ret_val = free_blks;
+    free_blks = free_blks->next;
+    ret_val->next = NULL;
+    return ret_val;
+}
+
 int init_storage()
 {
     // Function to initialize memory as free_blks emulator
@@ -21,11 +35,11 @@ int init_storage()
     {
         temp->next = temp+1;
         temp = temp+1;
-    }
+    } 
     temp = temp +1;
     temp->next = EOM_PTR; // last block in memory can't point to anything
 
-    if(free_blks == NULL)
+    if(*free_blks == NULL)
     {
         printf("init_storage: Allocation of memory failed!");
         return -1;
@@ -40,10 +54,5 @@ int init_storage()
     root.st_nlink = 2;
     root.st_size = 0;
     root.head = NULL;
-    
-    
-
     return 1;
-
-
 }

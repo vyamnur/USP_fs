@@ -15,7 +15,8 @@ typedef char BLK_DATA_TYPE;
 #define EOM_PTR -1
 #define MAX_PATH_LEN 252
 #define MAX_CHILDREN 10
-int init_storage();
+
+
 
 
 typedef struct block
@@ -41,8 +42,14 @@ typedef struct inode
 
 }inode;
 
-static inode root;
+static inode *root;
 static block *free_blks;
 static int inode_ctr=0;
+
+/*------------------------------------ METHOD PROTOTYPES -------------------------------------*/
+int init_storage();
+block *get_free_block();
+
+
 
 #endif //USP_FS_HELLO_HEADER_H
