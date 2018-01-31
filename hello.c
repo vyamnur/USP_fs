@@ -2,10 +2,10 @@
  ******************************** Credits *****************************************
 
   FUSE: Filesystem in Userspace
+  FOR THE BASIC PROGRAM STRUCTURE ONLY
   Copyright (C) 2001-2007  Miklos Szeredi <miklos@szeredi.hu>
-  This program can be distributed under the terms of the GNU GPL.
-  See the file COPYING.
-
+  
+  
  **********************************************************************************
 
 	linked list approach to block management
@@ -31,11 +31,8 @@
 #include <string.h>
 #include <errno.h>
 #include <fcntl.h>
-#include <zconf.h>
+//#include <zconf.h> only cmake
 #include "hello_header.h"
-
-static const char *hello_str = "Hello World!\n";
-static const char *hello_path = "/hello";
 
 
 extern struct inode *root;
@@ -144,36 +141,31 @@ static int hello_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
 }
 
 
-
-static int hello_read(const char *path, char *buf, size_t size, off_t offset,
-                      struct fuse_file_info *fi)
-{
-    size_t len;
-    (void) fi;
-    if(strcmp(path, hello_path) != 0)
-        return -ENOENT;
-
-    len = strlen(hello_str);
-    if (offset < len) {
-        if (offset + size > len)
-            size = len - offset;
-        memcpy(buf, hello_str + offset, size);
-    } else
-        size = 0;
-
-    return size;
-}
-
 static int hello_open(const char* path, struct fuse_file_info* fi)
 {
 
     printf("Opened a file! %s\n",path);
 
-    /*char *a = strdup(path);
+    char *a = strdup(path);
     inode *i = createChild(root, a+1, 0);
-    */
-    //printf("Open done: %s\n", i->name);
+    
+    printf("Open done: %s\n", i->name);
 
+    // make a filehandle and enclose in fi, extract in hello_write and do write
+    filehandle *fh = (filehandle *)malloc(sizeof(filehandle));
+    if(fh == NULL)
+    {
+        return -1;
+    }
+    // Locate the file
+    char *hj = strdup(path);
+    // fh->node = resolve_path(path,0); // 0 because we dont want to create a dir, use this when multi level directories are ready    
+    fh->node = createChild(root, hj+1 ,0); // 0 because we dont want to create a dir 
+    if(fh->node == NULL)
+    {
+        return -1;
+    }    
+    fi->fh = fh;    
     return 0;
 
 }
@@ -190,17 +182,15 @@ static int hello_write(const char *path, const char *buf, size_t size, off_t off
 {
 
     printf("beginning write!\n");
-    char *hj = strdup(path);
+    
     // does not support negative offset!
     if(offset<0)
     {
         return 0;
     }
     // locate the file
-    //inode *fil = resolve_path(path,0); // 0 becasue we dont want to create a dir
-
-    inode *fil = createChild(root, hj+1 ,0); // 0 becasue we dont want to create a dir
-
+    filehandle *fh =  (filehandle *)fi->fh;
+    inode *fil =  (inode *)fh->node;        
     if(fil == NULL)
     {
         printf("Could not resolve path, in hello_write");
@@ -276,6 +266,65 @@ static int hello_write(const char *path, const char *buf, size_t size, off_t off
     return 0; // never reached
 }
 
+int hello_read(const char* path, char *buf, size_t size, off_t offset, struct fuse_file_info* fi)
+{
+    //Read size bytes from the given file into the buffer buf, beginning offset bytes into the file. See read(2) for full details. Returns the number of bytes transferred, or 0 if offset was at or beyond the end of the file. Required for any sensible filesystem. 
+    filehandle *fh =  (filehandle *)fi->fh;
+    inode *fil =  (inode *)fh->node;       
+    if(fil == NULL)
+    {
+        return -1;
+    }
+    
+    // seek to offset
+    int read_blk_offset = 0; //offset within a block
+    block *read_block = fil->head;
+    while(offset>0)
+    {
+        if(offset>sizeof(read_block->data))
+        {
+            offset -= sizeof(read_block->data);
+            
+            if(read_block->next == NULL)
+            {
+                return -1; // invalid seek
+            }
+            read_block = read_block->next;
+        }
+        else
+        {
+            read_blk_offset = offset;
+            offset = 0;
+        }
+    }
+    
+    // begin reading
+    char *temp = buf;
+    int i = 0; // local counter variable    
+    int bytes_read = 0;
+    while(size > 0)
+    {
+        i = 0;
+        while(size>0 && i+read_blk_offset < sizeof(read_block->data) )
+        {
+            buf[0] = read_block->data[i+read_blk_offset];
+            buf++;
+            i++;
+            bytes_read++;
+            size--;
+
+        }
+        read_blk_offset = 0;
+        read_block = read_block->next;
+        if(read_block == NULL)
+        {
+            return bytes_read;
+        }
+    }
+    return bytes_read;
+
+}   
+
 
 static struct fuse_operations hello_oper = {
         .getattr	= hello_getattr,
@@ -285,6 +334,7 @@ static struct fuse_operations hello_oper = {
         .write      = hello_write,
         .mkdir      = hello_mkdir,
         .create     = hello_create,
+        
 };
 
 int main(int argc, char *argv[])

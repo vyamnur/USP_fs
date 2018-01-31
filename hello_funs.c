@@ -7,7 +7,7 @@
 
 block *get_free_block()
 {
-    if (free_blks == NULL || free_blks==EOM_PTR)
+    if (free_blks == NULL)
     {
         printf("Couldn't find free blocks! in get_free_block");
         return NULL;
@@ -39,7 +39,7 @@ int init_storage()
         temp = temp+1;
     }
     temp = temp +1;
-    temp->next = EOM_PTR; // last block in memory can't point to anything
+    temp->next = NULL; // last block in memory can't point to anything
 
     printf("2...\n");
 
