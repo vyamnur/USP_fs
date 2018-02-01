@@ -8,19 +8,20 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <unistd.h>
+#include <sys/types.h>
 
 typedef char BLK_DATA_TYPE;
 
 #define NUM_BLKS 1000
 #define BLK_SIZE sizeof(block)
-#define EOM_PTR -1
 #define MAX_PATH_LEN 252
 #define MAX_CHILDREN 10
 #define MAX_LEVEL 10
 
 int init_storage();
 
-
+/*------------------------------------- STRUCTURES ---------------------------------------------*/
 typedef struct block
 {
     BLK_DATA_TYPE data[1024];
@@ -43,6 +44,13 @@ typedef struct inode
 
 
 }inode;
+
+typedef struct filehandle 
+{
+  inode *node;
+  int o_flags;
+}filehandle;
+
 
 /*------------------------------------ METHOD PROTOTYPES -------------------------------------*/
 int init_storage();
