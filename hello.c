@@ -76,9 +76,10 @@ static int hello_getattr(const char *path, struct stat *stbuf) {
 
     } else if ((strcmp(path, "..") != 0) && (strcmp(path, ".") != 0)) {
 
-        char *string, *found;
-        char *dir_array[MAX_LEVEL];
+        char *string;
         string = strdup(path);
+        /*char *dir_array[MAX_LEVEL];
+        char *found;
         int i = -2;
 
         while ((found = strsep(&string, "/")) != NULL) {
@@ -106,6 +107,23 @@ static int hello_getattr(const char *path, struct stat *stbuf) {
                 stbuf->st_mtime = time( NULL ); // The last "m"odification of the file/directory is right now
             }
         }
+        */
+            struct inode *temp;// = root;
+            temp = resolve_path(string, 2);
+            if (temp == NULL) {
+                printf("Resolve path in getattr did not work\n");
+                res = -ENOENT;
+            } else {
+                printf("temp: %s\n", temp->name);
+                stbuf->st_mode = (temp->is_dir == 1)?(S_IFDIR| 0755):(S_IFREG | 0444);
+                stbuf->st_nlink = temp->st_nlink;
+                stbuf->st_size = 0;
+                stbuf->st_uid = getuid(); // The owner of the file/directory is the user who mounted the filesystem
+                stbuf->st_gid = getgid(); // The group of the file/directory is the same as the group of the user who mounted the filesystem
+                stbuf->st_atime = time( NULL ); // The last "a"ccess of the file/directory is right now
+                stbuf->st_mtime = time( NULL ); // The last "m"odification of the file/directory is right now
+            }
+
     }
     else
         res = -ENOENT;
@@ -136,6 +154,10 @@ static int hello_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
         }
     }
 
+    else {
+        
+    }
+
 
     return 0;
 }
@@ -147,9 +169,15 @@ static int hello_open(const char* path, struct fuse_file_info* fi)
     printf("Opened a file! %s\n",path);
 
     char *a = strdup(path);
+/*<<<<<<< Updated upstream
     inode *i = createChild(root, a+1, 0);
     
     printf("Open done: %s\n", i->name);
+=======
+    //inode *i = createChild(root, a+1, 0);
+
+    //printf("Open done: %s\n", i->name);
+>>>>>>> Stashed changes*/
 
     // make a filehandle and enclose in fi, extract in hello_write and do write
     filehandle *fh = (filehandle *)malloc(sizeof(filehandle));
@@ -159,8 +187,8 @@ static int hello_open(const char* path, struct fuse_file_info* fi)
     }
     // Locate the file
     char *hj = strdup(path);
-    // fh->node = resolve_path(path,0); // 0 because we dont want to create a dir, use this when multi level directories are ready    
-    fh->node = createChild(root, hj+1 ,0); // 0 because we dont want to create a dir 
+    fh->node = resolve_path(path,0); // 0 because we dont want to create a dir, use this when multi level directories are ready
+    //fh->node = createChild(root, hj+1 ,0); // 0 because we dont want to create a dir
     if(fh->node == NULL)
     {
         return -1;
@@ -182,7 +210,8 @@ static int hello_write(const char *path, const char *buf, size_t size, off_t off
 {
 
     printf("beginning write!\n");
-    
+
+    char *hj = strdup(path);
     // does not support negative offset!
     if(offset<0)
     {
@@ -191,6 +220,10 @@ static int hello_write(const char *path, const char *buf, size_t size, off_t off
     // locate the file
     filehandle *fh =  (filehandle *)fi->fh;
     inode *fil =  (inode *)fh->node;        
+    //fil = resolve_path(path,0); // 0 becasue we dont want to create a dir
+
+    //inode *fil =createChild(root, hj+1 ,0); // 0 becasue we dont want to create a dir
+
     if(fil == NULL)
     {
         printf("Could not resolve path, in hello_write");

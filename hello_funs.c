@@ -73,49 +73,53 @@ struct inode *resolve_path(char *path, int is_dir) {
 
     printf("1..path: %s\n", path);
 
-    //Split path by '/' and store in an array
-    int i = -2;
 
+    /*Split path by '/' and store in an array
+    Testing required*/
+    int i = -2; //-2 because strsep returns two garbage values before actual inodes
     while( (found = strsep(&string,"/")) != NULL ) {
         i++;
-        printf("%s", found);
+        //printf("%s", found);
         dir_array[i] = found;
     }
-
-
-
     for(int k = 0; k <= i; k++) {
         printf("Path %d: %s\n", k, dir_array[k]);
     }
+    printf("2.. Added all to array\n");
 
-
-//    printf("dir_array: %s\n", dir_array[0]);
-    printf("i: %d\n", i);
-
+    //printf("dir_array: %s\n", dir_array[0]);
+    //printf("i: %d\n", i);
     if(i == 0) {
-        return createChild(root, dir_array[0], is_dir);
+        inode *t = child_exists(root, dir_array[0]);
+        if(t != NULL) return t;//For getattr
+        else if(is_dir != 2) return createChild(root, dir_array[0], is_dir);
+        else return NULL;
     }
 
 
-    printf("2.. Added all to array\n");
-
-    //Get to the deepest directory in the path
+    //Get to the deepest directory in the path. Assumes child_exists works
     struct inode *temp = root;
     int j;
 
-    for(j = 0; j < i - 1; j++) {
-        if((temp = child_exists(temp, dir_array[j])) == NULL)
+    for(j = 0; j < i; j++) {
+        if((temp = child_exists(temp, dir_array[j])) == NULL) {
             printf("Directory %s does not exist\n", dir_array[j]);
+            return NULL;
+        }
     }
 
-    printf("Traversed to last array\n");
+    printf("j: %d d: %s\n", j, dir_array[1]);
 
-    if((temp = child_exists(temp, dir_array[j]) == NULL)){
+    printf("Traversed to last directory\n");
+
+    struct inode *temp1 = temp;
+    if((temp = child_exists(temp, dir_array[j])) == NULL){
         printf("Checking last entry: IF\n");
-        return createChild(temp, dir_array[j], is_dir);
+        if(is_dir != 2) return createChild(temp1, dir_array[j], is_dir);
+        return NULL;
     }
     else {
-        printf("Checking last entry: ELSE\n");
+        printf("Checking last entry: ELSE temp: %s\n", temp->name);
         return temp;
     }
 }
@@ -127,17 +131,19 @@ struct inode *child_exists(struct inode *parent, char *child) {
         return NULL;
     }
     if(parent->st_nlink < 3 || parent->is_dir != 1) {
-        printf("child_exists: Not a directory or directory empty\n");
+        printf("child_exists: Not a directory or directory empty: %s\n", parent->name);
         return NULL;
     }
 
     struct inode* temp = parent->children[0];
-
-    printf("Checking for child: %s\n", child);
+    printf("temp in ex: %s\n", temp->name);
+    printf("Checking for child: %s in parent %s\n", child, parent->name);
 
     for(int i = 0; i <= parent->st_nlink - 2; i++){
-        if(strcmp(temp->name, child) == 0)
+        if(strcmp(strdup(temp->name), strdup(child)) == 0){
+            printf("Child found\n");
             return temp;
+        }
     }
     printf("Child not found\n");
     return NULL;
