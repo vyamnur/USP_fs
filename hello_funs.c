@@ -21,6 +21,23 @@ block *get_free_block()
 
 int init_storage()
 {
+    
+    int file_pointer;
+    if( access(FILE_NAME, F_OK) )
+    {
+        mem_fil = open(FILE_NAME, O_RDRW);    
+    }
+    else
+    {
+        mem_fil = open(FILE_NAME, O_CREAT|O_RDRW, 775);
+    }
+    /*------------------------ INODE SUPER_BLK SECTION -----------------------------------*/
+
+
+    /*------------------------ DATA SECTION ---------------------------------------------*/
+    file_status = lseek(mem_fil,DATA_OFFSET,SEEK_SET); // seek to the start of the data section
+        
+
     // Function to initialize memory as free_blks emulator
     printf("Initing storage..\n");
 

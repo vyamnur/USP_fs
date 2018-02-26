@@ -20,8 +20,11 @@ typedef char BLK_DATA_TYPE;
 #define MAX_CHILDREN 10
 #define MAX_LEVEL 10
 #define DATA_OFFSET 0
-#define FILE_NAME "memory_fil"
+#define FILE_NAME "./memory_fil"
 int init_storage();
+
+/*------------------------------------- FILE DESCRIPTOR ----------------------------------------*/
+int mem_fil;
 
 /*------------------------------------- STRUCTURES ---------------------------------------------*/
 typedef struct block
