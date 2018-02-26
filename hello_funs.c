@@ -32,16 +32,29 @@ int init_storage()
         mem_fil = open(FILE_NAME, O_CREAT|O_RDRW, 775);
     }
     /*------------------------ INODE SUPER_BLK SECTION -----------------------------------*/
+    root = (inode *)malloc(sizeof(inode));
+
+    // make root directory
+
+    root->name = "/";
+    root->i_num = inode_ctr++;
+    root->is_dir = 1;
+    root->parent = NULL;
+    root->st_nlink = 2;
+    root->st_size = 0;
+    root->head = NULL;
 
 
     /*------------------------ DATA SECTION ---------------------------------------------*/
     file_status = lseek(mem_fil,DATA_OFFSET,SEEK_SET); // seek to the start of the data section
-        
+    *free_blks = DATA_OFFSET; // all blocks are free         
 
-    // Function to initialize memory as free_blks emulator
-    printf("Initing storage..\n");
+    printf("Initializing storage..\n");
 
     int mem_size = NUM_BLKS * BLK_SIZE;
+    int i = 0; //local counter
+    
+    /*    
     free_blks = (block *)calloc(sizeof(block), mem_size/sizeof(block));
 
     block *temp = free_blks; // local variable
@@ -65,19 +78,8 @@ int init_storage()
         printf("init_storage: Allocation of memory failed!");
         return -1;
     }
-
-    root = (inode *)malloc(sizeof(inode));
-
-    // make root directory
-
-    root->name = "/";
-    root->i_num = inode_ctr++;
-    root->is_dir = 1;
-    root->parent = NULL;
-    root->st_nlink = 2;
-    root->st_size = 0;
-    root->head = NULL;
-
+    
+    */
     printf("Init done!\n");
     return 1;
 }
