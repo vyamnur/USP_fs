@@ -4,18 +4,89 @@
 // Created by vyam on 28/1/18.
 //
 
-
-block *get_free_block()
+int write_disk_block(long offset, char *buf)
 {
-    if (free_blks == NULL)
+    // working with the assumption that sizeof buff is size of data block, manage that in read and write!    
+
+    // seek to offset
+    if( fseek(mem_fil,offset,SEEK_SET) != 0)
+    {
+        printf("fseek error in write_disk_block! \n");
+        return -1;
+    }
+    // read the struct
+    block *data_block = malloc(sizeof(block));
+    if( fread(data_block, sizeof(data_block), 1, mem_fil) != 1)
+    {
+        printf("fread error in write_disk_block! \n");
+        return -1;
+    
+    }
+    // copy the data into the buf        
+    strcpy(data_block->data,buf);
+
+    // write it back
+    if( fwrite(data_block, sizeof(data_block), 1, mem_fil) != 1)
+    {
+        printf("fwrite error in write_disk_block! \n");
+        return -1;
+    
+    }    
+    return 1; // write success!
+}
+
+
+
+
+
+int read_disk_block(long offset, char *buf)
+{
+    // working with the assumption that sizeof buff is size of data block, manage that in read and write!    
+
+    // seek to offset
+    if( fseek(mem_fil,offset,SEEK_SET) != 0)
+    {
+        printf("fseek error in read_disk_block! \n");
+        return -1;
+    }
+    // read the struct
+    block *data_block = malloc(sizeof(block));
+    if( fread(data_block, sizeof(data_block), 1, mem_fil) != 1)
+    {
+        printf("fread error in read_disk_block! \n");
+        return -1;
+    
+    }
+    // copy the data into the buf        
+    strcpy(buf,data_block->data);
+    return 1; // read success!
+}
+
+long get_free_block()
+{
+    if (free_blks == -1)
     {
         printf("Couldn't find free blocks! in get_free_block");
-        return NULL;
+        return -1;
     }
     // move free_blks to next
-    block *ret_val = free_blks;
-    free_blks = free_blks->next;
-    ret_val->next = NULL;
+    long *ret_val = free_blks;
+    // seek to the free block
+    if( fseek(mem_fil,free_blk,SEEK_SET) != 0)
+    {
+        printf("fseek in get_free_block failed! \n");
+        return -1;
+    }
+    // read it
+    block *data_block = malloc(sizeof(block));
+    if( fread(data_block, sizeof(data_block), 1, mem_fil) != 1)
+    {
+        printf("fread error in get_free_block! \n");
+        return -1;
+    
+    }        
+    // update the new free block to it's next    
+    free_blk = data_block->next;
     return ret_val;
 }
 
@@ -23,6 +94,7 @@ int init_storage()
 {
     
     FILE *file_pointer;
+    /*------------------------ DATA SECTION ---------------------------------------------*/
     if( access(FILE_NAME, F_OK) ) // file exists
     {
         mem_fil = fopen(FILE_NAME, "r+b"); 
@@ -39,6 +111,8 @@ int init_storage()
         }
         
         *free_blks = DATA_OFFSET; // all blocks are free         
+
+        // !IMPORTANT Update super block
 
         printf("Initializing storage..\n");
 
@@ -69,10 +143,10 @@ int init_storage()
     root->parent = NULL;
     root->st_nlink = 2;
     root->st_size = 0;
-    root->head = NULL;
+    root->head = -1;
 
 
-    /*------------------------ DATA SECTION ---------------------------------------------*/
+    
     
     /* ---------------- For Non Persistent ----------------------------------------------- */    
     free_blks = (block *)calloc(sizeof(block), mem_size/sizeof(block));
@@ -203,7 +277,7 @@ struct inode *createChild(struct inode *parent, char *child, int is_dir) {
     temp->st_nlink = (is_dir == 1)?2:1;
 
     temp->st_size = 0;
-    temp->head = NULL;
+    temp->head = -1;
 
     parent->children[parent->st_nlink - 2] = temp;
     parent->st_nlink += 1;

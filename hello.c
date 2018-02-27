@@ -231,7 +231,7 @@ static int hello_write(const char *path, const char *buf, size_t size, off_t off
     }
     
     //new file, allocate memory and write
-    if(fil->head == NULL)
+    if(fil->head == -1)
     {
         fil->head = get_free_block();
         if(fil->head == NULL)

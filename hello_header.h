@@ -45,7 +45,7 @@ typedef struct inode
 
     int st_size;
     int st_nlink;
-    block *head;
+    long head; // address of first block of memory of this file
 
 
 }inode;
@@ -59,15 +59,16 @@ typedef struct filehandle
 
 /*------------------------------------ METHOD PROTOTYPES -------------------------------------*/
 int init_storage();
-block *get_free_block();
+long get_free_block();
 
 
 struct inode *root;
-static block *free_blks;
+long *free_blks;
 static int inode_ctr=0;
 
 struct inode *resolve_path(char *path, int is_dir);
 struct inode *child_exists(struct inode *parent, char *child);
 struct inode *createChild(struct inode *parent, char *child, int is_dir);
-
+int read_disk_block(long offset, char *buf);
+int write_disk_block(long offset, char *buf);
 #endif //USP_FS_HELLO_HEADER_H
