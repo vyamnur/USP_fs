@@ -24,13 +24,13 @@ typedef char BLK_DATA_TYPE;
 int init_storage();
 
 /*------------------------------------- FILE DESCRIPTOR ----------------------------------------*/
-int mem_fil;
+FILE mem_fil;
 
 /*------------------------------------- STRUCTURES ---------------------------------------------*/
 typedef struct block
 {
     BLK_DATA_TYPE data[1024];
-    struct block *next;
+    long next;
 }block;
 
 

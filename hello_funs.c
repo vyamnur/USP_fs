@@ -22,14 +22,41 @@ block *get_free_block()
 int init_storage()
 {
     
-    int file_pointer;
-    if( access(FILE_NAME, F_OK) )
+    FILE *file_pointer;
+    if( access(FILE_NAME, F_OK) ) // file exists
     {
-        mem_fil = open(FILE_NAME, O_RDRW);    
+        mem_fil = fopen(FILE_NAME, "r+b"); 
+        // get *free blks from super_blk   
     }
-    else
+    else // file does not exist
     {
-        mem_fil = open(FILE_NAME, O_CREAT|O_RDRW, 775);
+        mem_fil = fopen(FILE_NAME, "w+b");
+        file_status = fseek(mem_fil,DATA_OFFSET,SEEK_SET); // seek to the start of the data section
+        if(file_status != 0)
+        {
+            printf("Could not Seek in file, in init!\n");
+            return -1;
+        }
+        
+        *free_blks = DATA_OFFSET; // all blocks are free         
+
+        printf("Initializing storage..\n");
+
+        int mem_size = NUM_BLKS * BLK_SIZE;
+        int i = 0; //local counter
+            
+        block fil_block;
+        int write_status = 0; // status flag    
+        for(i;i<NUM_BLKS;i++)
+        {
+            fil_block.next = ftell(FILE) + sizeof(fil_block); // points to next data block
+            write_status = fwrite(&fil_block,sizeof(fil_block),1, mem_fil);        
+            if(write_status != 1)
+            {
+                printf("fwrite failed! in init\n");
+                return -1;
+            }            
+        }
     }
     /*------------------------ INODE SUPER_BLK SECTION -----------------------------------*/
     root = (inode *)malloc(sizeof(inode));
@@ -46,15 +73,8 @@ int init_storage()
 
 
     /*------------------------ DATA SECTION ---------------------------------------------*/
-    file_status = lseek(mem_fil,DATA_OFFSET,SEEK_SET); // seek to the start of the data section
-    *free_blks = DATA_OFFSET; // all blocks are free         
-
-    printf("Initializing storage..\n");
-
-    int mem_size = NUM_BLKS * BLK_SIZE;
-    int i = 0; //local counter
     
-    /*    
+    /* ---------------- For Non Persistent ----------------------------------------------- */    
     free_blks = (block *)calloc(sizeof(block), mem_size/sizeof(block));
 
     block *temp = free_blks; // local variable
