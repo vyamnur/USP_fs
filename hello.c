@@ -301,7 +301,9 @@ static int hello_write(const char *path, const char *buf, size_t size, off_t off
 
 int hello_read(const char* path, char *buf, size_t size, off_t offset, struct fuse_file_info* fi)
 {
-    //Read size bytes from the given file into the buffer buf, beginning offset bytes into the file. See read(2) for full details. Returns the number of bytes transferred, or 0 if offset was at or beyond the end of the file. Required for any sensible filesystem. 
+    //Read size bytes from the given file into the buffer buf, beginning offset bytes into the file. See read(2) for full details.
+    // Returns the number of bytes transferred,         
+    // or 0 if offset was at or beyond the end of the file. Required for any sensible filesystem. 
     filehandle *fh =  (filehandle *)fi->fh;
     inode *fil =  (inode *)fh->node;       
     if(fil == NULL)
@@ -311,18 +313,27 @@ int hello_read(const char* path, char *buf, size_t size, off_t offset, struct fu
     
     // seek to offset
     int read_blk_offset = 0; //offset within a block
-    block *read_block = fil->head;
+    block *read_block = malloc(sizeof(block)); // remember to free this
+    if( read_disk_block(inode->head,read_block) != 1)
+    {
+        printf("read disk block failed in read\n!");
+        return -1;
+    }
     while(offset>0)
     {
         if(offset>sizeof(read_block->data))
         {
             offset -= sizeof(read_block->data);
             
-            if(read_block->next == NULL)
+            if(read_block->next == -1) // -1 means no next block
             {
                 return -1; // invalid seek
             }
-            read_block = read_block->next;
+            if( read_disk_block(read_block->next,read_block) != 1)
+            {
+                printf(" 2 read disk block failed in read\n!");
+                return -1;
+            }
         }
         else
         {
@@ -348,8 +359,7 @@ int hello_read(const char* path, char *buf, size_t size, off_t offset, struct fu
 
         }
         read_blk_offset = 0;
-        read_block = read_block->next;
-        if(read_block == NULL)
+        if( read_disk_block(read_block->next,read_block) != 1)
         {
             return bytes_read;
         }
