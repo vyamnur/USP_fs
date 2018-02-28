@@ -210,23 +210,22 @@ static int hello_write(const char *path, const char *buf, size_t size, off_t off
 {
 
     printf("beginning write!\n");
-
+    block *write_block = malloc(sizeof(block));
     char *hj = strdup(path);
     // does not support negative offset!
     if(offset<0)
     {
+        free(write_block);
         return 0;
     }
     // locate the file
     filehandle *fh =  (filehandle *)fi->fh;
     inode *fil =  (inode *)fh->node;        
-    //fil = resolve_path(path,0); // 0 becasue we dont want to create a dir
-
-    //inode *fil =createChild(root, hj+1 ,0); // 0 becasue we dont want to create a dir
-
+    
     if(fil == NULL)
     {
         printf("Could not resolve path, in hello_write");
+        free(write_block);
         return 0;
     }
     
@@ -234,31 +233,45 @@ static int hello_write(const char *path, const char *buf, size_t size, off_t off
     if(fil->head == -1)
     {
         fil->head = get_free_block();
-        if(fil->head == NULL)
+        if(fil->head == -1)
         {
-            //printf("Didn't get free block! in hello_write");
+            printf("Didn't get free block! in hello_write");
+            free(write_block);
             return -1;
         }
+       
+    }
+    else
+    {
+        read_disk_block(fil->head,write_block);
     }
     
     // seek to offset
     int write_blk_offset = 0; //offset within a block
-    block *write_block = fil->head;
+    long block_disk_position = fil->head; // where to write modified blocks back
+    
     while(offset>0)
     {
         if(offset>sizeof(write_block->data))
         {
             offset -= sizeof(write_block->data);
             
-            if(write_block->next == NULL)
+            if(write_block->next == -1)
             {
-                write_block->next = get_free_block();
-                if(write_block->next == NULL)
+               write_block->next = get_free_block();
+               write_disk_block(block_disk_position,write_block); // update next on disk 
+               if(write_block->next == -1)
                 {
-                    return 0;
+                    printf("2 Didn't get free block! in hello_write");
+                    free(write_block);
+                    return -1;
                 }
+
+               
             }
-            write_block = write_block->next;
+            block_disk_position = write_block->next;
+            read_disk_block(write_block->next, write_block); // write_block = write_block->next
+                    
         }
         else
         {
@@ -272,30 +285,36 @@ static int hello_write(const char *path, const char *buf, size_t size, off_t off
     while(buf!=NULL)
     {
         blk_ctr=0;
-        while(blk_ctr<sizeof(write_block->data))
+        while(write_blk_offset+blk_ctr<sizeof(write_block->data))
         {
             if(buf == NULL)
             {
                 write_block->data[write_blk_offset+blk_ctr] = '\0';
+                write_disk_block(block_disk_position,write_block);                
+                free(write_block);
                 return 0; // done writing, return
             }
             write_block->data[write_blk_offset+blk_ctr] = buf[0];
             buf = buf+1;
             blk_ctr++;
         }
-        // run out of blck go to next block
-        if(write_block->next == NULL)
+        // run out of block go to next block
+        if(write_block->next == -1)
         {
             write_block->next = get_free_block();
-            if(write_block->next == NULL)
+            write_disk_block(block_disk_position,write_block); // update next on disk            
+            if(write_block->next == -1)
             {
+                free(write_block);
                 return 0;
             }
         }
         write_blk_offset = 0;
-        write_block = write_block->next;
+        block_disk_position = write_block->next;
+        read_disk_block(write_block->next,write_block);
         
     }
+    free(write_block);
     return 0; // never reached
 }
 
@@ -332,6 +351,7 @@ int hello_read(const char* path, char *buf, size_t size, off_t offset, struct fu
             if( read_disk_block(read_block->next,read_block) != 1)
             {
                 printf(" 2 read disk block failed in read\n!");
+                free(read_block);
                 return -1;
             }
         }
@@ -361,9 +381,11 @@ int hello_read(const char* path, char *buf, size_t size, off_t offset, struct fu
         read_blk_offset = 0;
         if( read_disk_block(read_block->next,read_block) != 1)
         {
+            free(read_block);
             return bytes_read;
         }
     }
+    free(read_block);
     return bytes_read;
 
 }   

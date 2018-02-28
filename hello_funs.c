@@ -54,24 +54,18 @@ long get_free_block()
         printf("Couldn't find free blocks! in get_free_block");
         return -1;
     }
-    // move free_blks to next
-    long ret_val = free_blks;
-    // seek to the free block
-    if( fseek(mem_fil,free_blk,SEEK_SET) != 0)
-    {
-        printf("fseek in get_free_block failed! \n");
-        return -1;
-    }
-    // read it
-    block *data_block = malloc(sizeof(block));
-    if( fread(data_block, sizeof(data_block), 1, mem_fil) != 1)
-    {
-        printf("fread error in get_free_block! \n");
-        return -1;
+    block *data_block = malloc(sizeof(bock));
     
-    }        
-    // update the new free block to it's next    
-    free_blk = data_block->next;
+    long ret_val = free_blks;
+    read_disk_block(free_blks, data_block);      
+    // update the new free block head to it's next    
+    free_blks = data_block->next;
+
+    // set the new block's next to -1, reuses the data_block 
+    data_block->next = -1;
+    write_disk_block(ret_val,data_block); // setting the new block's next to -1
+    
+    free(data_block);
     return ret_val;
 }
 
