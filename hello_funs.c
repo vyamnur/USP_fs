@@ -4,7 +4,7 @@
 // Created by vyam on 28/1/18.
 //
 
-int write_disk_block(long offset, char *buf)
+int write_disk_block(long offset, block *buf)
 {
     // working with the assumption that sizeof buff is size of data block, manage that in read and write!    
 
@@ -14,19 +14,9 @@ int write_disk_block(long offset, char *buf)
         printf("fseek error in write_disk_block! \n");
         return -1;
     }
-    // read the struct
-    block *data_block = malloc(sizeof(block));
-    if( fread(data_block, sizeof(data_block), 1, mem_fil) != 1)
-    {
-        printf("fread error in write_disk_block! \n");
-        return -1;
-    
-    }
-    // copy the data into the buf        
-    strcpy(data_block->data,buf);
 
     // write it back
-    if( fwrite(data_block, sizeof(data_block), 1, mem_fil) != 1)
+    if( fwrite(buf, sizeof(block), 1, mem_fil) != 1)
     {
         printf("fwrite error in write_disk_block! \n");
         return -1;
@@ -39,10 +29,8 @@ int write_disk_block(long offset, char *buf)
 
 
 
-int read_disk_block(long offset, char *buf)
+int read_disk_block(long offset, disk_block *buf)
 {
-    // working with the assumption that sizeof buff is size of data block, manage that in read and write!    
-
     // seek to offset
     if( fseek(mem_fil,offset,SEEK_SET) != 0)
     {
@@ -50,15 +38,12 @@ int read_disk_block(long offset, char *buf)
         return -1;
     }
     // read the struct
-    block *data_block = malloc(sizeof(block));
-    if( fread(data_block, sizeof(data_block), 1, mem_fil) != 1)
+    if( fread(buf, sizeof(block), 1, mem_fil) != 1)
     {
         printf("fread error in read_disk_block! \n");
         return -1;
     
     }
-    // copy the data into the buf        
-    strcpy(buf,data_block->data);
     return 1; // read success!
 }
 
@@ -69,24 +54,18 @@ long get_free_block()
         printf("Couldn't find free blocks! in get_free_block");
         return -1;
     }
-    // move free_blks to next
-    long *ret_val = free_blks;
-    // seek to the free block
-    if( fseek(mem_fil,free_blk,SEEK_SET) != 0)
-    {
-        printf("fseek in get_free_block failed! \n");
-        return -1;
-    }
-    // read it
-    block *data_block = malloc(sizeof(block));
-    if( fread(data_block, sizeof(data_block), 1, mem_fil) != 1)
-    {
-        printf("fread error in get_free_block! \n");
-        return -1;
+    block *data_block = malloc(sizeof(bock));
     
-    }        
-    // update the new free block to it's next    
-    free_blk = data_block->next;
+    long ret_val = free_blks;
+    read_disk_block(free_blks, data_block);      
+    // update the new free block head to it's next    
+    free_blks = data_block->next;
+
+    // set the new block's next to -1, reuses the data_block 
+    data_block->next = -1;
+    write_disk_block(ret_val,data_block); // setting the new block's next to -1
+    
+    free(data_block);
     return ret_val;
 }
 

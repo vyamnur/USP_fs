@@ -63,7 +63,7 @@ long get_free_block();
 
 
 struct inode *root;
-long *free_blks;
+long free_blks;
 static int inode_ctr=0;
 
 struct inode *resolve_path(char *path, int is_dir);
