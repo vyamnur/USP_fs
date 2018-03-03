@@ -117,7 +117,7 @@ static int hello_getattr(const char *path, struct stat *stbuf) {
                 printf("temp: %s\n", temp->name);
                 stbuf->st_mode = (temp->is_dir == 1)?(S_IFDIR| 0755):(S_IFREG | 0444);
                 stbuf->st_nlink = temp->st_nlink;
-                stbuf->st_size = 0;
+                stbuf->st_size = temp->st_size;
                 stbuf->st_uid = getuid(); // The owner of the file/directory is the user who mounted the filesystem
                 stbuf->st_gid = getgid(); // The group of the file/directory is the same as the group of the user who mounted the filesystem
                 stbuf->st_atime = time( NULL ); // The last "a"ccess of the file/directory is right now
@@ -209,7 +209,7 @@ static int hello_create(const char *path, mode_t mode, struct fuse_file_info *fi
 static int hello_write(const char *path, const char *buf, size_t size, off_t offset, struct fuse_file_info *fi)
 {
 
-    printf("beginning write!\n");
+    printf("beginning write! size to write: %d \n",size);
     block *write_block = malloc(sizeof(block));
     char *hj = strdup(path);
     // does not support negative offset!
@@ -249,7 +249,7 @@ static int hello_write(const char *path, const char *buf, size_t size, off_t off
     // seek to offset
     int write_blk_offset = 0; //offset within a block
     long block_disk_position = fil->head; // where to write modified blocks back
-    
+    printf("seeking to offset!\n");
     while(offset>0)
     {
         if(offset>sizeof(write_block->data))
@@ -279,43 +279,48 @@ static int hello_write(const char *path, const char *buf, size_t size, off_t off
             offset = 0;
         }
     }
-    
+    printf("done seeking to offset!\n");
     //start writing from buff
     int blk_ctr;
-    while(buf!=NULL)
+    int temp = size;
+    while(buf!=NULL && size > 0)
     {
+         read_disk_block(block_disk_position,write_block);
         blk_ctr=0;
-        while(write_blk_offset+blk_ctr<sizeof(write_block->data))
+        while(write_blk_offset+blk_ctr<sizeof(write_block->data) && size >= 0)
         {
-            if(buf == NULL)
+            if(size == 0)
             {
                 write_block->data[write_blk_offset+blk_ctr] = '\0';
                 write_disk_block(block_disk_position,write_block);                
                 free(write_block);
-                return 0; // done writing, return
+                fil->st_size = temp;
+                return temp; // done writing, return
             }
             write_block->data[write_blk_offset+blk_ctr] = buf[0];
+            size--;
             buf = buf+1;
             blk_ctr++;
+            
         }
         // run out of block go to next block
         if(write_block->next == -1)
         {
+            printf("here\n");
             write_block->next = get_free_block();
-            write_disk_block(block_disk_position,write_block); // update next on disk            
-            if(write_block->next == -1)
-            {
-                free(write_block);
-                return 0;
-            }
+            write_disk_block(block_disk_position,write_block); // update next on current block on disk     
+           
         }
         write_blk_offset = 0;
         block_disk_position = write_block->next;
-        read_disk_block(write_block->next,write_block);
+        
+       
         
     }
+    printf("done writing!\n");
     free(write_block);
-    return 0; // never reached
+    fil->st_size = temp;
+    return temp; 
 }
 
 int hello_read(const char* path, char *buf, size_t size, off_t offset, struct fuse_file_info* fi)
@@ -323,6 +328,7 @@ int hello_read(const char* path, char *buf, size_t size, off_t offset, struct fu
     //Read size bytes from the given file into the buffer buf, beginning offset bytes into the file. See read(2) for full details.
     // Returns the number of bytes transferred,         
     // or 0 if offset was at or beyond the end of the file. Required for any sensible filesystem. 
+    printf("To read %d bytes",size);    
     filehandle *fh =  (filehandle *)fi->fh;
     inode *fil =  (inode *)fh->node;       
     if(fil == NULL)
@@ -333,7 +339,7 @@ int hello_read(const char* path, char *buf, size_t size, off_t offset, struct fu
     // seek to offset
     int read_blk_offset = 0; //offset within a block
     block *read_block = malloc(sizeof(block)); // remember to free this
-    if( read_disk_block(inode->head,read_block) != 1)
+    if( read_disk_block(fil->head, read_block) != 1)
     {
         printf("read disk block failed in read\n!");
         return -1;
@@ -363,6 +369,7 @@ int hello_read(const char* path, char *buf, size_t size, off_t offset, struct fu
     }
     
     // begin reading
+    printf("begin read!\n");
     char *temp = buf;
     int i = 0; // local counter variable    
     int bytes_read = 0;
@@ -378,9 +385,16 @@ int hello_read(const char* path, char *buf, size_t size, off_t offset, struct fu
             size--;
 
         }
+        if(size == 0)
+        {
+            free(read_block);
+            return bytes_read;
+        }
         read_blk_offset = 0;
+        printf("here\n");        
         if( read_disk_block(read_block->next,read_block) != 1)
         {
+            
             free(read_block);
             return bytes_read;
         }
