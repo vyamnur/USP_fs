@@ -13,7 +13,7 @@
 #include <sys/stat.h>
 
 typedef char BLK_DATA_TYPE;
-
+#define NUM_DATA_ELEMS 512
 #define NUM_BLKS 1000
 #define BLK_SIZE sizeof(block)
 #define MAX_PATH_LEN 252
@@ -21,7 +21,7 @@ typedef char BLK_DATA_TYPE;
 #define MAX_LEVEL 10
 #define INODE_OFFSET sizeof(int)*100
 #define DATA_OFFSET (INODE_OFFSET + sizeof(struct inode)*100)
-#define FILE_NAME "./memory_fil"
+#define FILE_NAME "/home/priyank/usp/persistence/USP_fs/memory_fil.dat"
 int init_storage();
 
 /*------------------------------------- FILE DESCRIPTOR ----------------------------------------*/
@@ -30,7 +30,7 @@ FILE *mem_fil;
 /*------------------------------------- STRUCTURES ---------------------------------------------*/
 typedef struct block
 {
-    BLK_DATA_TYPE data[1024];
+    BLK_DATA_TYPE data[NUM_DATA_ELEMS];
     long next;
 }block;
 

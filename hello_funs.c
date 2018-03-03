@@ -6,7 +6,7 @@
 
 int write_disk_block(long offset, block *buf)
 {
-    // working with the assumption that sizeof buff is size of data block, manage that in read and write!    
+    printf("write disk block called! %ld\n",offset);    
 
     // seek to offset
     if( fseek(mem_fil,offset,SEEK_SET) != 0)
@@ -31,6 +31,7 @@ int write_disk_block(long offset, block *buf)
 
 int read_disk_block(long offset, block *buf)
 {
+    printf("read disk block called! %ld\n",offset);
     // seek to offset
     if( fseek(mem_fil,offset,SEEK_SET) != 0)
     {
@@ -91,6 +92,7 @@ int read_disk_inode(long offset, struct inode *buf)
 
 long get_free_block()
 {
+    printf("get free block called! free_blk: %ld\n",free_blks);    
     if (free_blks == -1)
     {
         printf("Couldn't find free blocks! in get_free_block");
@@ -116,19 +118,19 @@ int init_storage()
 
     FILE *file_pointer;
     /*------------------------ DATA SECTION ---------------------------------------------*/
-    if( access(FILE_NAME, F_OK) ) // file exists
-    {
-        printf("Init: If\n");
-        mem_fil = fopen(FILE_NAME, "r+b"); 
-        // get *free blks from super_blk   
-    }
-    else // file does not exist
-    {
-        printf("Init: Else\n");
+    
+         
         mem_fil = fopen(FILE_NAME, "w+b");
+        if(mem_fil == NULL)
+        {
+            printf("Could not create a mem_fil!\n");
+        }
+        
+       
         int file_status = fseek(mem_fil,DATA_OFFSET,SEEK_SET); // seek to the start of the data section
         if(file_status != 0)
         {
+
             printf("Could not Seek in file, in init!\n");
             return -1;
         }
@@ -177,7 +179,7 @@ int init_storage()
             }
         }
 
-    }
+   
 
 
     /*------------------------ INODE SUPER_BLK SECTION -----------------------------------*/
