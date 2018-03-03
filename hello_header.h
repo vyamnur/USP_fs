@@ -19,12 +19,13 @@ typedef char BLK_DATA_TYPE;
 #define MAX_PATH_LEN 252
 #define MAX_CHILDREN 10
 #define MAX_LEVEL 10
-#define DATA_OFFSET 0
+#define INODE_OFFSET sizeof(int)*100
+#define DATA_OFFSET (INODE_OFFSET + sizeof(struct inode)*100)
 #define FILE_NAME "./memory_fil"
 int init_storage();
 
 /*------------------------------------- FILE DESCRIPTOR ----------------------------------------*/
-FILE mem_fil;
+FILE *mem_fil;
 
 /*------------------------------------- STRUCTURES ---------------------------------------------*/
 typedef struct block
@@ -69,6 +70,6 @@ static int inode_ctr=0;
 struct inode *resolve_path(char *path, int is_dir);
 struct inode *child_exists(struct inode *parent, char *child);
 struct inode *createChild(struct inode *parent, char *child, int is_dir);
-int read_disk_block(long offset, char *buf);
-int write_disk_block(long offset, char *buf);
+int read_disk_block(long offset, block *buf);
+int write_disk_block(long offset, block *buf);
 #endif //USP_FS_HELLO_HEADER_H

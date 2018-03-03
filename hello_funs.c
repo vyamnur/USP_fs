@@ -29,7 +29,7 @@ int write_disk_block(long offset, block *buf)
 
 
 
-int read_disk_block(long offset, disk_block *buf)
+int read_disk_block(long offset, block *buf)
 {
     // seek to offset
     if( fseek(mem_fil,offset,SEEK_SET) != 0)
@@ -47,6 +47,48 @@ int read_disk_block(long offset, disk_block *buf)
     return 1; // read success!
 }
 
+
+int write_disk_inode(long offset, struct inode *buf)
+{
+    // working with the assumption that sizeof buff is size of data block, manage that in read and write!
+
+    // seek to offset
+    if( fseek(mem_fil,offset,SEEK_SET) != 0)
+    {
+        printf("fseek error in write_disk_block! \n");
+        return -1;
+    }
+
+    // write it back
+    if( fwrite(buf, sizeof(struct inode), 1, mem_fil) != 1)
+    {
+        printf("fwrite error in write_disk_block! \n");
+        return -1;
+
+    }
+    return 1; // write success!
+}
+
+
+int read_disk_inode(long offset, struct inode *buf)
+{
+    // seek to offset
+    if( fseek(mem_fil,offset,SEEK_SET) != 0)
+    {
+        printf("fseek error in read_disk_block! \n");
+        return -1;
+    }
+    // read the struct
+    if( fread(buf, sizeof(struct inode), 1, mem_fil) != 1)
+    {
+        printf("fread error in read_disk_block! \n");
+        return -1;
+
+    }
+    return 1; // read success!
+}
+
+
 long get_free_block()
 {
     if (free_blks == -1)
@@ -54,7 +96,7 @@ long get_free_block()
         printf("Couldn't find free blocks! in get_free_block");
         return -1;
     }
-    block *data_block = malloc(sizeof(bock));
+    block *data_block = malloc(sizeof(block));
     
     long ret_val = free_blks;
     read_disk_block(free_blks, data_block);      
@@ -82,14 +124,14 @@ int init_storage()
     else // file does not exist
     {
         mem_fil = fopen(FILE_NAME, "w+b");
-        file_status = fseek(mem_fil,DATA_OFFSET,SEEK_SET); // seek to the start of the data section
+        int file_status = fseek(mem_fil,DATA_OFFSET,SEEK_SET); // seek to the start of the data section
         if(file_status != 0)
         {
             printf("Could not Seek in file, in init!\n");
             return -1;
         }
         
-        *free_blks = DATA_OFFSET; // all blocks are free         
+        free_blks = DATA_OFFSET; // all blocks are free
 
         // !IMPORTANT Update super block
 
@@ -102,7 +144,7 @@ int init_storage()
         int write_status = 0; // status flag    
         for(i;i<NUM_BLKS;i++)
         {
-            fil_block.next = ftell(FILE) + sizeof(fil_block); // points to next data block
+            fil_block.next = ftell(mem_fil) + sizeof(fil_block); // points to next data block
             write_status = fwrite(&fil_block,sizeof(fil_block),1, mem_fil);        
             if(write_status != 1)
             {
@@ -111,6 +153,9 @@ int init_storage()
             }            
         }
     }
+
+    
+
     /*------------------------ INODE SUPER_BLK SECTION -----------------------------------*/
     root = (inode *)malloc(sizeof(inode));
 
@@ -127,7 +172,7 @@ int init_storage()
 
     
     
-    /* ---------------- For Non Persistent ----------------------------------------------- */    
+    /* ---------------- For Non Persistent -----------------------------------------------
     free_blks = (block *)calloc(sizeof(block), mem_size/sizeof(block));
 
     block *temp = free_blks; // local variable
@@ -231,11 +276,15 @@ struct inode *child_exists(struct inode *parent, char *child) {
     printf("temp in ex: %s\n", temp->name);
     printf("Checking for child: %s in parent %s\n", child, parent->name);
 
-    for(int i = 0; i <= parent->st_nlink - 2; i++){
+    for(int i = 0; i < parent->st_nlink - 2; i++){
+        printf("blyat %s\n", temp->name);
+        temp = parent->children[i];
+        printf("blahablyat %s\n", temp->name);
         if(strcmp(strdup(temp->name), strdup(child)) == 0){
             printf("Child found\n");
             return temp;
         }
+        printf("%d\n", i);
     }
     printf("Child not found\n");
     return NULL;
@@ -245,7 +294,7 @@ struct inode *createChild(struct inode *parent, char *child, int is_dir) {
     printf("create_child called parent: %s child: %s\n", parent->name, child);
     struct inode *temp = (struct inode *)malloc(sizeof(struct inode));
     //printf("1..\n");
-    temp->name = child;
+    temp->name = strdup(child);
     temp->parent = parent;
 
     printf("%s\n", temp->name);
