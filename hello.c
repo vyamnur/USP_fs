@@ -333,7 +333,7 @@ int hello_read(const char* path, char *buf, size_t size, off_t offset, struct fu
     // seek to offset
     int read_blk_offset = 0; //offset within a block
     block *read_block = malloc(sizeof(block)); // remember to free this
-    if( read_disk_block(inode->head,read_block) != 1)
+    if( read_disk_block(fil->head, read_block) != 1)
     {
         printf("read disk block failed in read\n!");
         return -1;

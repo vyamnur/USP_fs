@@ -113,16 +113,18 @@ long get_free_block()
 
 int init_storage()
 {
-    
+
     FILE *file_pointer;
     /*------------------------ DATA SECTION ---------------------------------------------*/
     if( access(FILE_NAME, F_OK) ) // file exists
     {
+        printf("Init: If\n");
         mem_fil = fopen(FILE_NAME, "r+b"); 
         // get *free blks from super_blk   
     }
     else // file does not exist
     {
+        printf("Init: Else\n");
         mem_fil = fopen(FILE_NAME, "w+b");
         int file_status = fseek(mem_fil,DATA_OFFSET,SEEK_SET); // seek to the start of the data section
         if(file_status != 0)
@@ -152,9 +154,31 @@ int init_storage()
                 return -1;
             }            
         }
+
+        file_status = fseek(mem_fil, INODE_OFFSET, SEEK_SET); // seek to the start of the data section
+        if(file_status != 0)
+        {
+            printf("Could not Seek in file, in init!\n");
+            return -1;
+        }
+
+        printf("Populating inode block.....\n");
+
+        struct inode fil_inode;
+        write_status = 0; // status flag
+
+        for(i;i<NUM_BLKS;i++)
+        {
+            write_status = fwrite(&fil_inode,sizeof(fil_inode), 1, mem_fil);
+            if(write_status != 1)
+            {
+                printf("fwrite failed! in init\n");
+                return -1;
+            }
+        }
+
     }
 
-    
 
     /*------------------------ INODE SUPER_BLK SECTION -----------------------------------*/
     root = (inode *)malloc(sizeof(inode));
