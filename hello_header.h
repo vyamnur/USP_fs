@@ -15,6 +15,7 @@
 typedef char BLK_DATA_TYPE;
 
 #define NUM_BLKS 1000
+#define NUM_DATA_ELEMS 512
 #define BLK_SIZE sizeof(block)
 #define MAX_PATH_LEN 252
 #define MAX_CHILDREN 10
@@ -29,7 +30,7 @@ FILE mem_fil;
 /*------------------------------------- STRUCTURES ---------------------------------------------*/
 typedef struct block
 {
-    BLK_DATA_TYPE data[1024];
+    BLK_DATA_TYPE data[NUM_DATA_ELEMS];
     long next;
 }block;
 
