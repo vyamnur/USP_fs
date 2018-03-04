@@ -14,12 +14,13 @@
 
 typedef char BLK_DATA_TYPE;
 
+#define NUM_INODES 100
 #define NUM_BLKS 1000
 #define BLK_SIZE sizeof(block)
 #define MAX_PATH_LEN 252
 #define MAX_CHILDREN 10
 #define MAX_LEVEL 10
-#define INODE_OFFSET sizeof(int)*100
+#define INODE_OFFSET sizeof(long)*100
 #define DATA_OFFSET (INODE_OFFSET + sizeof(struct inode)*100)
 #define FILE_NAME "./memory_fil"
 int init_storage();
@@ -37,12 +38,14 @@ typedef struct block
 
 typedef struct inode
 {
+
     char *name;
     int i_num;
     int is_dir;
 
     struct inode *parent;
     struct inode *children[MAX_CHILDREN];
+    long chls[MAX_CHILDREN];
 
     int st_size;
     int st_nlink;
@@ -57,6 +60,8 @@ typedef struct filehandle
   int o_flags;
 }filehandle;
 
+
+long free_inodes_list[100];
 
 /*------------------------------------ METHOD PROTOTYPES -------------------------------------*/
 int init_storage();

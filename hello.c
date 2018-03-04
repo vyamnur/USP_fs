@@ -36,6 +36,7 @@
 
 
 extern struct inode *root;
+extern long free_inodes_list[100];
 
 static int hello_mkdir(const char *path_name, mode_t mode)
 {

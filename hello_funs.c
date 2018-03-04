@@ -4,6 +4,9 @@
 // Created by vyam on 28/1/18.
 //
 
+int stack_top = 98;
+
+
 int write_disk_block(long offset, block *buf)
 {
     // working with the assumption that sizeof buff is size of data block, manage that in read and write!    
@@ -48,12 +51,14 @@ int read_disk_block(long offset, block *buf)
 }
 
 
-int write_disk_inode(long offset, struct inode *buf)
+int write_disk_inode(struct inode *buf)
 {
     // working with the assumption that sizeof buff is size of data block, manage that in read and write!
 
     // seek to offset
-    if( fseek(mem_fil,offset,SEEK_SET) != 0)
+    long offset = buf->i_num;
+    offset *= sizeof(struct inode);
+    if( fseek(mem_fil,offset  + INODE_OFFSET,SEEK_SET) != 0)
     {
         printf("fseek error in write_disk_block! \n");
         return -1;
@@ -66,6 +71,8 @@ int write_disk_inode(long offset, struct inode *buf)
         return -1;
 
     }
+
+    printf("write_disk_inode: inode %s write success\n", buf->name);
     return 1; // write success!
 }
 
@@ -79,6 +86,7 @@ int read_disk_inode(long offset, struct inode *buf)
         return -1;
     }
     // read the struct
+
     if( fread(buf, sizeof(struct inode), 1, mem_fil) != 1)
     {
         printf("fread error in read_disk_block! \n");
@@ -167,8 +175,9 @@ int init_storage()
         struct inode fil_inode;
         write_status = 0; // status flag
 
-        for(i;i<NUM_BLKS;i++)
+        for(i = 0;i<NUM_INODES;i++)
         {
+            fil_inode.i_num = i;
             write_status = fwrite(&fil_inode,sizeof(fil_inode), 1, mem_fil);
             if(write_status != 1)
             {
@@ -177,6 +186,10 @@ int init_storage()
             }
         }
 
+        for(int i = DATA_OFFSET - sizeof(struct inode), j = 0;i > INODE_OFFSET; j++, i -= sizeof(struct inode)) {
+            free_inodes_list[j] = i;
+            //printf("%d\n", j);
+        }
     }
 
 
@@ -186,14 +199,24 @@ int init_storage()
     // make root directory
 
     root->name = "/";
-    root->i_num = inode_ctr++;
+    root->i_num = 0;
     root->is_dir = 1;
     root->parent = NULL;
     root->st_nlink = 2;
     root->st_size = 0;
     root->head = -1;
 
+    write_disk_inode(root);
 
+    printf("Checking for inode init....\n");
+
+    struct inode *blah = (inode *)malloc(sizeof(inode));
+    read_disk_inode(INODE_OFFSET, blah);
+
+    printf("Checking for inode init....Read inode from disk\n");
+
+
+    printf("root name: %s\n\n", blah->name);
     
     
     /* ---------------- For Non Persistent -----------------------------------------------
@@ -297,6 +320,9 @@ struct inode *child_exists(struct inode *parent, char *child) {
     }
 
     struct inode* temp = parent->children[0];
+    struct inode* t1 = (struct inode *)malloc(sizeof(struct inode));
+    read_disk_inode(parent->chls[0], t1);
+
     printf("temp in ex: %s\n", temp->name);
     printf("Checking for child: %s in parent %s\n", child, parent->name);
 
@@ -323,7 +349,6 @@ struct inode *createChild(struct inode *parent, char *child, int is_dir) {
 
     printf("%s\n", temp->name);
 
-    temp->i_num = inode_ctr++;
     temp->is_dir = is_dir;
 
     temp->st_nlink = (is_dir == 1)?2:1;
