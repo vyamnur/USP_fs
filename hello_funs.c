@@ -86,14 +86,14 @@ int read_disk_inode(long offset, struct inode *buf)
         return -1;
     }
     // read the struct
-    printf("kdjskflds\n");
+    //printf("kdjskflds\n");
     if( fread(buf, sizeof(struct inode), 1, mem_fil) != 1)
     {
         printf("fread error in read_disk_block! \n");
         return -1;
 
     }
-    printf("kdjskflds\n");
+    //printf("kdjskflds\n");
 
     return 1; // read success!
 }
@@ -285,7 +285,7 @@ struct inode *resolve_path(char *path, int is_dir) {
 
 
     //Get to the deepest directory in the path. Assumes child_exists works
-    struct inode *temp;
+    struct inode *temp = (struct inode*)malloc(sizeof(struct inode));
     read_disk_inode(INODE_OFFSET, temp);
     int j;
 

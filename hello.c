@@ -152,22 +152,35 @@ static int hello_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
     filler(buf, "..", NULL, 0);
     struct inode *temp = (struct inode *)malloc(sizeof(struct inode));
 
-    if(strcmp(path, "/") == 0 && root->st_nlink > 2) {
-        for(int i = 0; i < root->st_nlink - 2; i++){
+    struct inode *parent;
+    if(strcmp(path, "/") == 0) parent = root;
+    else parent = resolve_path(path, 2);
+
+    if(parent != NULL && parent->st_nlink > 2) {
+        for(int i = 0; i < parent->st_nlink - 2; i++){
             //struct inode *temp = root->children[0];
-            printf("jkjlkjlkj %d\n", root->chls[i]);
-            read_disk_inode((root->chls[i] * sizeof(struct inode)) + INODE_OFFSET, temp);
+            printf("jkjlkjlkj %d\n", parent->chls[i]);
+            read_disk_inode((parent->chls[i] * sizeof(struct inode)) + INODE_OFFSET, temp);
             printf("jkshdfkhdsfdsfsd kekekkeke\n");
             printf("Child %i: %s\n",i, temp->name);
             filler(buf, temp->name, NULL, 0);
         }
     }
 
-    else {
-        
-    }
+    /*
+    if(strcmp(path, "/") == 0 && root->st_nlink > 2) {
+        for (int i = 0; i < root->st_nlink - 2; i++) {
+            //struct inode *temp = root->children[0];
+            printf("jkjlkjlkj %d\n", root->chls[i]);
+            read_disk_inode((root->chls[i] * sizeof(struct inode)) + INODE_OFFSET, temp);
+            printf("jkshdfkhdsfdsfsd kekekkeke\n");
+            printf("Child %i: %s\n", i, temp->name);
+            filler(buf, temp->name, NULL, 0);
+        }
+    }*/
 
-
+    //else {
+//  }
     return 0;
 }
 
