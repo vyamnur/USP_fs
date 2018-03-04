@@ -140,6 +140,22 @@ int init_storage()
     int file_status = fseek(mem_fil,DATA_OFFSET,SEEK_SET); // seek to the start of the data section
     if(file_status != 0)
     {
+        mem_fil = fopen(FILE_NAME, "w+b");
+        if(mem_fil == NULL)
+        {
+            printf("Could not create a mem_fil!\n");
+        }
+        
+       
+        int file_status = fseek(mem_fil,DATA_OFFSET,SEEK_SET); // seek to the start of the data section
+        if(file_status != 0)
+        {
+
+            printf("Could not Seek in file, in init!\n");
+            return -1;
+        }
+        
+        free_blks = DATA_OFFSET; // all blocks are free
 
         printf("Could not Seek in file, in init!\n");
         return -1;
@@ -195,8 +211,6 @@ int init_storage()
         free_inodes_list[j] = k;
         printf("%ld\n", free_inodes_list[j]);
     }
-
-
 
 
 

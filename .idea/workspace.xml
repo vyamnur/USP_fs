@@ -12,7 +12,6 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="9fcc694f-9bab-4d20-b588-7171f07b726c" name="Default" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
       <change beforePath="$PROJECT_DIR$/hello" afterPath="$PROJECT_DIR$/hello" />
       <change beforePath="$PROJECT_DIR$/hello_funs.c" afterPath="$PROJECT_DIR$/hello_funs.c" />
       <change beforePath="$PROJECT_DIR$/hello_funs.o" afterPath="$PROJECT_DIR$/hello_funs.o" />
@@ -60,8 +59,8 @@
       <file leaf-file-name="hello_funs.c" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/hello_funs.c">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="252">
-              <caret line="130" column="4" lean-forward="true" selection-start-line="130" selection-start-column="4" selection-end-line="130" selection-end-column="4" />
+            <state relative-caret-position="1745">
+              <caret line="288" column="5" lean-forward="true" selection-start-line="288" selection-start-column="5" selection-end-line="288" selection-end-column="5" />
               <folding />
             </state>
           </provider>
@@ -70,8 +69,8 @@
       <file leaf-file-name="hello_header.h" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/hello_header.h">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="564">
-              <caret line="76" column="18" lean-forward="false" selection-start-line="76" selection-start-column="14" selection-end-line="76" selection-end-column="18" />
+            <state relative-caret-position="252">
+              <caret line="14" column="27" lean-forward="false" selection-start-line="14" selection-start-column="27" selection-end-line="14" selection-end-column="27" />
               <folding>
                 <element signature="e#99#118#0" expanded="true" />
               </folding>
@@ -116,7 +115,7 @@
   </component>
   <component name="OCFindUsagesOptions" text="false" ivars="false" properties="true" derivedClasses="false" />
   <component name="ProjectFrameBounds" extendedState="6">
-    <option name="x" value="-1" />
+    <option name="x" value="-1921" />
     <option name="y" value="-11" />
     <option name="width" value="1922" />
     <option name="height" value="1092" />
@@ -344,15 +343,15 @@
       <workItem from="1517461557366" duration="351000" />
       <workItem from="1519991315811" duration="3179000" />
       <workItem from="1520057069635" duration="25465000" />
-      <workItem from="1520167312689" duration="3319000" />
+      <workItem from="1520167312689" duration="3651000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="79598000" />
+    <option name="totallyTimeSpent" value="79930000" />
   </component>
   <component name="ToolWindowManager">
-    <frame x="-1" y="-11" width="1922" height="1092" extended-state="6" />
+    <frame x="-1921" y="-11" width="1922" height="1092" extended-state="6" />
     <editor active="true" />
     <layout>
       <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.15052083" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
@@ -391,22 +390,22 @@
       <breakpoints>
         <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
           <url>file://$PROJECT_DIR$/hello_funs.c</url>
-          <line>338</line>
+          <line>352</line>
           <option name="timeStamp" value="1" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
           <url>file://$PROJECT_DIR$/hello_funs.c</url>
-          <line>329</line>
+          <line>343</line>
           <option name="timeStamp" value="2" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
           <url>file://$PROJECT_DIR$/hello_funs.c</url>
-          <line>306</line>
+          <line>320</line>
           <option name="timeStamp" value="3" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
           <url>file://$PROJECT_DIR$/hello_funs.c</url>
-          <line>291</line>
+          <line>305</line>
           <option name="timeStamp" value="4" />
         </line-breakpoint>
       </breakpoints>
@@ -826,8 +825,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/hello_header.h">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="564">
-          <caret line="76" column="18" lean-forward="false" selection-start-line="76" selection-start-column="14" selection-end-line="76" selection-end-column="18" />
+        <state relative-caret-position="252">
+          <caret line="14" column="27" lean-forward="false" selection-start-line="14" selection-start-column="27" selection-end-line="14" selection-end-column="27" />
           <folding>
             <element signature="e#99#118#0" expanded="true" />
           </folding>
@@ -836,8 +835,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/hello_funs.c">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="252">
-          <caret line="130" column="4" lean-forward="true" selection-start-line="130" selection-start-column="4" selection-end-line="130" selection-end-column="4" />
+        <state relative-caret-position="1745">
+          <caret line="288" column="5" lean-forward="true" selection-start-line="288" selection-start-column="5" selection-end-line="288" selection-end-column="5" />
           <folding />
         </state>
       </provider>
