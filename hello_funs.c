@@ -9,7 +9,7 @@ int stack_top = 98;
 
 int write_disk_block(long offset, block *buf)
 {
-    // working with the assumption that sizeof buff is size of data block, manage that in read and write!    
+    printf("write disk block called! %ld\n",offset);    
 
     // seek to offset
     if( fseek(mem_fil,offset,SEEK_SET) != 0)
@@ -34,6 +34,7 @@ int write_disk_block(long offset, block *buf)
 
 int read_disk_block(long offset, block *buf)
 {
+    printf("read disk block called! %ld\n",offset);
     // seek to offset
     if( fseek(mem_fil,offset,SEEK_SET) != 0)
     {
@@ -101,6 +102,7 @@ int read_disk_inode(long offset, struct inode *buf)
 
 long get_free_block()
 {
+    printf("get free block called! free_blk: %ld\n",free_blks);    
     if (free_blks == -1)
     {
         printf("Couldn't find free blocks! in get_free_block");
@@ -126,78 +128,80 @@ int init_storage()
 
     FILE *file_pointer;
     /*------------------------ DATA SECTION ---------------------------------------------*/
-    if( access(FILE_NAME, F_OK) ) // file exists
+    
+         
+    mem_fil = fopen(FILE_NAME, "w+b");
+    if(mem_fil == NULL)
     {
-        printf("Init: If\n");
-        mem_fil = fopen(FILE_NAME, "r+b"); 
-        // get *free blks from super_blk   
+        printf("Could not create a mem_fil!\n");
     }
-    else // file does not exist
+
+
+    int file_status = fseek(mem_fil,DATA_OFFSET,SEEK_SET); // seek to the start of the data section
+    if(file_status != 0)
     {
-        printf("Init: Else\n");
-        mem_fil = fopen(FILE_NAME, "w+b");
-        int file_status = fseek(mem_fil,DATA_OFFSET,SEEK_SET); // seek to the start of the data section
-        if(file_status != 0)
+
+        printf("Could not Seek in file, in init!\n");
+        return -1;
+    }
+
+    free_blks = DATA_OFFSET; // all blocks are free
+
+    // !IMPORTANT Update super block
+
+    printf("Initializing storage..\n");
+
+    int mem_size = NUM_BLKS * BLK_SIZE;
+    int i = 0; //local counter
+
+    block fil_block;
+    int write_status = 0; // status flag
+    for(i;i<NUM_BLKS;i++)
+    {
+        fil_block.next = ftell(mem_fil) + sizeof(fil_block); // points to next data block
+        write_status = fwrite(&fil_block,sizeof(fil_block),1, mem_fil);
+        if(write_status != 1)
         {
-            printf("Could not Seek in file, in init!\n");
+            printf("fwrite failed! in init\n");
             return -1;
         }
-        
-        free_blks = DATA_OFFSET; // all blocks are free
+    }
 
-        // !IMPORTANT Update super block
+    file_status = fseek(mem_fil, INODE_OFFSET, SEEK_SET); // seek to the start of the data section
+    if(file_status != 0)
+    {
+        printf("Could not Seek in file, in init!\n");
+        return -1;
+    }
 
-        printf("Initializing storage..\n");
+    printf("Populating inode block.....\n");
 
-        int mem_size = NUM_BLKS * BLK_SIZE;
-        int i = 0; //local counter
-            
-        block fil_block;
-        int write_status = 0; // status flag    
-        for(i;i<NUM_BLKS;i++)
+    struct inode fil_inode;
+    write_status = 0; // status flag
+
+    for(i = 0;i<NUM_INODES;i++)
+    {
+        fil_inode.i_num = i;
+        write_status = fwrite(&fil_inode,sizeof(fil_inode), 1, mem_fil);
+        if(write_status != 1)
         {
-            fil_block.next = ftell(mem_fil) + sizeof(fil_block); // points to next data block
-            write_status = fwrite(&fil_block,sizeof(fil_block),1, mem_fil);        
-            if(write_status != 1)
-            {
-                printf("fwrite failed! in init\n");
-                return -1;
-            }            
-        }
-
-        file_status = fseek(mem_fil, INODE_OFFSET, SEEK_SET); // seek to the start of the data section
-        if(file_status != 0)
-        {
-            printf("Could not Seek in file, in init!\n");
+            printf("fwrite failed! in init\n");
             return -1;
         }
-
-        printf("Populating inode block.....\n");
-
-        struct inode fil_inode;
-        write_status = 0; // status flag
-
-        for(i = 0;i<NUM_INODES;i++)
-        {
-            fil_inode.i_num = i;
-            write_status = fwrite(&fil_inode,sizeof(fil_inode), 1, mem_fil);
-            if(write_status != 1)
-            {
-                printf("fwrite failed! in init\n");
-                return -1;
-            }
-        }
-        int j;
-        long k;
-        for(j = 0, k = DATA_OFFSET - sizeof(struct inode);k > INODE_OFFSET; j++, k -= sizeof(struct inode)) {
-            free_inodes_list[j] = k;
-            printf("%ld\n", free_inodes_list[j]);
-        }
     }
+    int j;
+    long k;
+    for(j = 0, k = DATA_OFFSET - sizeof(struct inode);k > INODE_OFFSET; j++, k -= sizeof(struct inode)) {
+        free_inodes_list[j] = k;
+        printf("%ld\n", free_inodes_list[j]);
+    }
+
+
+
 
 
     /*------------------------ INODE SUPER_BLK SECTION -----------------------------------*/
-    root = (inode *)malloc(sizeof(inode));
+    root = (struct inode *)malloc(sizeof(struct inode));
 
     // make root directory
 

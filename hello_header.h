@@ -15,6 +15,7 @@
 typedef char BLK_DATA_TYPE;
 
 #define NUM_INODES 100
+#define NUM_DATA_ELEMS 512
 #define NUM_BLKS 1000
 #define NUM_DATA_ELEMS 512
 #define BLK_SIZE sizeof(block)
@@ -23,7 +24,7 @@ typedef char BLK_DATA_TYPE;
 #define MAX_LEVEL 10
 #define INODE_OFFSET sizeof(long)*100
 #define DATA_OFFSET (INODE_OFFSET + sizeof(struct inode)*100)
-#define FILE_NAME "./memory_fil"
+#define FILE_NAME "/home/priyank/usp/persistence/USP_fs/memory_fil.dat"
 int init_storage();
 
 /*------------------------------------- FILE DESCRIPTOR ----------------------------------------*/
