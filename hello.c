@@ -233,7 +233,7 @@ static int hello_write(const char *path, const char *buf, size_t size, off_t off
 
     printf("beginning write! size to write: %d \n",size);
     block *write_block = malloc(sizeof(block));
-    char *hj = strdup(path);
+    
     // does not support negative offset!
     if(offset<0)
     {
@@ -278,7 +278,7 @@ static int hello_write(const char *path, const char *buf, size_t size, off_t off
         {
             offset -= sizeof(write_block->data);
             
-            if(write_block->next == -1)
+            if(write_block->next == -1) //offset is beyond current file size
             {
                write_block->next = get_free_block();
                write_disk_block(block_disk_position,write_block); // update next on disk 
@@ -288,6 +288,7 @@ static int hello_write(const char *path, const char *buf, size_t size, off_t off
                     free(write_block);
                     return -1;
                 }
+                
 
                
             }
@@ -317,6 +318,7 @@ static int hello_write(const char *path, const char *buf, size_t size, off_t off
                 write_disk_block(block_disk_position,write_block);                
                 free(write_block);
                 fil->st_size = temp;
+                write_disk_inode(fil);
                 return temp; // done writing, return
             }
             write_block->data[write_blk_offset+blk_ctr] = buf[0];
@@ -341,6 +343,7 @@ static int hello_write(const char *path, const char *buf, size_t size, off_t off
     }
     printf("done writing!\n");
     free(write_block);
+    write_disk_inode(fil);
     fil->st_size = temp;
     return temp; 
 }
