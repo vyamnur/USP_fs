@@ -348,15 +348,20 @@ struct inode *child_exists(struct inode *parent, char *child) {
         return NULL;
     }
 
-    struct inode* temp = parent->children[0];
+
+    struct inode* temp = (struct inode *)malloc(sizeof(struct inode));
+
     struct inode* t1 = (struct inode *)malloc(sizeof(struct inode));
     read_disk_inode(parent->chls[0], t1);
 
-    printf("temp in ex: %s\n", temp->name);
+
+
+//    printf("temp in ex: %s\n", temp->name);
+    printf("lksdjflsd %d\n", parent->is_dir);
     printf("Checking for child: %s in parent %s\n", child, parent->name);
 
     for(int i = 0; i < parent->st_nlink - 2; i++){
-        printf("blyat %s\n", temp->name);
+        //printf("blyat %s\n", temp->name);
         read_disk_inode((parent->chls[i]) * sizeof(struct inode) + INODE_OFFSET, temp);
         printf("blahablyat %s\n", temp->name);
         if(strcmp(strdup(temp->name), strdup(child)) == 0){
@@ -368,6 +373,7 @@ struct inode *child_exists(struct inode *parent, char *child) {
     printf("Child not found\n");
     return NULL;
 }
+
 
 struct inode *createChild(struct inode *parent, char *child, int is_dir) {
     printf("create_child called parent: %s child: %s\n", parent->name, child);
