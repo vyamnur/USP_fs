@@ -86,13 +86,15 @@ int read_disk_inode(long offset, struct inode *buf)
         return -1;
     }
     // read the struct
-
+    printf("kdjskflds\n");
     if( fread(buf, sizeof(struct inode), 1, mem_fil) != 1)
     {
         printf("fread error in read_disk_block! \n");
         return -1;
 
     }
+    printf("kdjskflds\n");
+
     return 1; // read success!
 }
 
@@ -185,10 +187,11 @@ int init_storage()
                 return -1;
             }
         }
-
-        for(int i = DATA_OFFSET - sizeof(struct inode), j = 0;i > INODE_OFFSET; j++, i -= sizeof(struct inode)) {
-            free_inodes_list[j] = i;
-            //printf("%d\n", j);
+        int j;
+        long k;
+        for(j = 0, k = DATA_OFFSET - sizeof(struct inode);k > INODE_OFFSET; j++, k -= sizeof(struct inode)) {
+            free_inodes_list[j] = k;
+            printf("%ld\n", free_inodes_list[j]);
         }
     }
 
@@ -198,7 +201,7 @@ int init_storage()
 
     // make root directory
 
-    root->name = "/";
+    strcpy(root->name, "/");
     root->i_num = 0;
     root->is_dir = 1;
     root->parent = NULL;
@@ -208,7 +211,7 @@ int init_storage()
 
     write_disk_inode(root);
 
-    printf("Checking for inode init....\n");
+    printf("Checking for inode init....%ld\n", INODE_OFFSET);
 
     struct inode *blah = (inode *)malloc(sizeof(inode));
     read_disk_inode(INODE_OFFSET, blah);
@@ -282,7 +285,8 @@ struct inode *resolve_path(char *path, int is_dir) {
 
 
     //Get to the deepest directory in the path. Assumes child_exists works
-    struct inode *temp = root;
+    struct inode *temp;
+    read_disk_inode(INODE_OFFSET, temp);
     int j;
 
     for(j = 0; j < i; j++) {
@@ -328,7 +332,7 @@ struct inode *child_exists(struct inode *parent, char *child) {
 
     for(int i = 0; i < parent->st_nlink - 2; i++){
         printf("blyat %s\n", temp->name);
-        temp = parent->children[i];
+        read_disk_inode((parent->chls[i]) * sizeof(struct inode) + INODE_OFFSET, temp);
         printf("blahablyat %s\n", temp->name);
         if(strcmp(strdup(temp->name), strdup(child)) == 0){
             printf("Child found\n");
@@ -344,20 +348,35 @@ struct inode *createChild(struct inode *parent, char *child, int is_dir) {
     printf("create_child called parent: %s child: %s\n", parent->name, child);
     struct inode *temp = (struct inode *)malloc(sizeof(struct inode));
     //printf("1..\n");
-    temp->name = strdup(child);
+    read_disk_inode(free_inodes_list[stack_top], temp);
+    strcpy(temp->name, child);
     temp->parent = parent;
+
+    temp->pt = (parent->i_num * sizeof(struct inode)) + INODE_OFFSET;
 
     printf("%s\n", temp->name);
 
     temp->is_dir = is_dir;
 
     temp->st_nlink = (is_dir == 1)?2:1;
+    temp->actual_nlink = temp->st_nlink;
+
+    parent->chls[parent->st_nlink - 2] = temp->i_num;
 
     temp->st_size = 0;
     temp->head = -1;
 
     parent->children[parent->st_nlink - 2] = temp;
+
+
+
+    stack_top--;
     parent->st_nlink += 1;
+
+    if(is_dir) parent->actual_nlink += 1;
+
+    write_disk_inode(parent);
+    write_disk_inode(temp);
 
     return temp;
 }

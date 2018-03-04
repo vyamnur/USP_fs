@@ -39,25 +39,29 @@ typedef struct block
 typedef struct inode
 {
 
-    char *name;
+    char name[50];
     int i_num;
     int is_dir;
 
     struct inode *parent;
+    long pt;
+
     struct inode *children[MAX_CHILDREN];
     long chls[MAX_CHILDREN];
 
     int st_size;
     int st_nlink;
+
+    int actual_nlink;
     long head; // address of first block of memory of this file
 
 
 }inode;
 
-typedef struct filehandle 
+typedef struct filehandle
 {
-  inode *node;
-  int o_flags;
+    inode *node;
+    int o_flags;
 }filehandle;
 
 
@@ -77,4 +81,6 @@ struct inode *child_exists(struct inode *parent, char *child);
 struct inode *createChild(struct inode *parent, char *child, int is_dir);
 int read_disk_block(long offset, block *buf);
 int write_disk_block(long offset, block *buf);
+int read_disk_inode(long offset, inode *buf);
+int write_disk_inode(inode *buf);
 #endif //USP_FS_HELLO_HEADER_H

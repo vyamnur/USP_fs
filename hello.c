@@ -52,7 +52,7 @@ static int hello_mkdir(const char *path_name, mode_t mode)
     }
     new_dir.i_num = inode_ctr++;
     new_dir.is_dir = 1;
-    // new_dir.parent = parse path to get parent
+    // new_dir.parent  = parse path to get parent
     new_dir.st_nlink =2;
     return 1;
 
@@ -138,6 +138,10 @@ static int hello_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
     (void) offset;
     (void) fi;
 
+    read_disk_inode(INODE_OFFSET, root);
+
+    printf("jlkjl %s\n", root->name);
+
     // this code has to be changed
     /*
     if (strcmp(path, "/") != 0)
@@ -146,12 +150,16 @@ static int hello_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
 
     filler(buf, ".", NULL, 0);
     filler(buf, "..", NULL, 0);
+    struct inode *temp = (struct inode *)malloc(sizeof(struct inode));
 
     if(strcmp(path, "/") == 0 && root->st_nlink > 2) {
         for(int i = 0; i < root->st_nlink - 2; i++){
             //struct inode *temp = root->children[0];
-            //printf("Children: %d\n",temp);
-            filler(buf, root->children[i]->name, NULL, 0);
+            printf("jkjlkjlkj %d\n", root->chls[i]);
+            read_disk_inode((root->chls[i] * sizeof(struct inode)) + INODE_OFFSET, temp);
+            printf("jkshdfkhdsfdsfsd kekekkeke\n");
+            printf("Child %i: %s\n",i, temp->name);
+            filler(buf, temp->name, NULL, 0);
         }
     }
 
