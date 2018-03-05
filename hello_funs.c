@@ -4,7 +4,7 @@
 // Created by vyam on 28/1/18.
 //
 
-int stack_top = 98;
+int stack_top = 98; // magic number?
 
 
 int write_disk_block(long offset, block *buf)
@@ -89,7 +89,7 @@ int read_disk_inode(long offset, struct inode *buf)
     // read the struct
     //printf("kdjskflds\n");
     if( fread(buf, sizeof(struct inode), 1, mem_fil) != 1)
-    {
+    {   
         printf("fread error in read_disk_block! \n");
         return -1;
 
@@ -98,6 +98,7 @@ int read_disk_inode(long offset, struct inode *buf)
 
     return 1; // read success!
 }
+
 
 
 long get_free_block()
@@ -114,12 +115,18 @@ long get_free_block()
     read_disk_block(free_blks, data_block);      
     // update the new free block head to it's next    
     free_blks = data_block->next;
-
+    fseek(mem_fil,0,SEEK_SET);
+    fprintf(mem_fil, "%ld",free_blks);
     // set the new block's next to -1, reuses the data_block 
     data_block->next = -1;
     write_disk_block(ret_val,data_block); // setting the new block's next to -1
-    
     free(data_block);
+    
+    fseek(mem_fil,0,SEEK_SET);
+    long temp;    
+    fscanf(mem_fil, "%ld",&temp);
+    printf("Free_blks on disk: %ld",temp); 
+
     return ret_val;
 }
 
@@ -154,15 +161,16 @@ int init_storage()
             }
             
             free_blks = DATA_OFFSET; // all blocks are free
-
+            fseek(mem_fil,0,SEEK_SET);
+            fprintf(mem_fil,"%ld",free_blks);
             printf("Could not Seek in file, in init!\n");
             return -1;
         }
 
         free_blks = DATA_OFFSET; // all blocks are free
-
-        // !IMPORTANT Update super block
-
+        fseek(mem_fil,0,SEEK_SET);
+        fprintf(mem_fil, "%ld", free_blks);
+        
         printf("Initializing storage..\n");
 
         int mem_size = NUM_BLKS * BLK_SIZE;
@@ -226,7 +234,9 @@ int init_storage()
     {
         printf("Loading saved fs!\n");
         root = (struct inode *)malloc(sizeof(struct inode));
-         read_disk_inode(INODE_OFFSET, root);
+        read_disk_inode(INODE_OFFSET, root);
+        fscanf(mem_fil,"%ld",&free_blks);
+        printf("free data blocks start at: %ld\n",free_blks);    
     }
 
 

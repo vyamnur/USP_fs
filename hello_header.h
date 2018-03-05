@@ -22,9 +22,10 @@ typedef char BLK_DATA_TYPE;
 #define MAX_PATH_LEN 252
 #define MAX_CHILDREN 10
 #define MAX_LEVEL 10
-#define INODE_OFFSET sizeof(long)*100
+#define FREE_BLK 0
+#define INODE_OFFSET sizeof(long)+sizeof(long)*100
 #define DATA_OFFSET (INODE_OFFSET + sizeof(struct inode)*100)
-#define FILE_NAME "/home/priyank/usp/persistence/USP_fs/memory_fil.dat"
+#define FILE_NAME "/home/priyank/usp/USP_fs/memory_fil.dat"
 int init_storage();
 
 /*------------------------------------- FILE DESCRIPTOR ----------------------------------------*/
@@ -81,6 +82,7 @@ static int inode_ctr=0;
 struct inode *resolve_path(char *path, int is_dir);
 struct inode *child_exists(struct inode *parent, char *child);
 struct inode *createChild(struct inode *parent, char *child, int is_dir);
+void write_free_blk_disk(long new_val);
 int read_disk_block(long offset, block *buf);
 int write_disk_block(long offset, block *buf);
 int read_disk_inode(long offset, inode *buf);
