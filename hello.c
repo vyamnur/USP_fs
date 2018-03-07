@@ -460,6 +460,9 @@ int hello_unlink(const char *path)
         offset = blk->next;
     }
     free(blk);
+
+    unlink_inode(ind);
+
     // get rid of the inode
 }
 
