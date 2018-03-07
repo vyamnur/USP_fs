@@ -123,7 +123,8 @@ static int hello_getattr(const char *path, struct stat *stbuf) {
                 stbuf->st_gid = getgid(); // The group of the file/directory is the same as the group of the user who mounted the filesystem
                 stbuf->st_atime = time( NULL ); // The last "a"ccess of the file/directory is right now
                 stbuf->st_mtime = time( NULL ); // The last "m"odification of the file/directory is right now
-            }
+                stbuf->st_blocks = temp->st_blocks;           
+         }
 
     }
     else
@@ -263,6 +264,7 @@ static int hello_write(const char *path, const char *buf, size_t size, off_t off
             free(write_block);
             return -1;
         }
+        fil->st_blocks++;
        
     }
     else
@@ -330,12 +332,13 @@ static int hello_write(const char *path, const char *buf, size_t size, off_t off
             blk_ctr++;
             
         }
-        // run out of block go to next block
+        // run out of block get free block
         if(write_block->next == -1)
         {
             printf("here\n");
             write_block->next = get_free_block();
-            write_disk_block(block_disk_position,write_block); // update next on current block on disk     
+            write_disk_block(block_disk_position,write_block); // update next on current block on disk   
+            fil->st_blocks++;  
            
         }
         write_blk_offset = 0;

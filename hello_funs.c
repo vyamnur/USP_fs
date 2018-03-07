@@ -406,7 +406,7 @@ struct inode *createChild(struct inode *parent, char *child, int is_dir) {
 
     temp->st_size = 0;
     temp->head = -1;
-
+    temp->st_blocks = 0;
     parent->children[parent->st_nlink - 2] = temp;
 
 

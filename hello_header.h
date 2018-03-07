@@ -54,7 +54,7 @@ typedef struct inode
 
     int st_size;
     int st_nlink;
-
+    int st_blocks;
     int actual_nlink;
     long head; // address of first block of memory of this file
 
