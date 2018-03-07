@@ -429,6 +429,28 @@ int hello_read(const char* path, char *buf, size_t size, off_t offset, struct fu
 
 }   
 
+int hello_unlink(const char *path)
+{
+    // get the inode from the path
+    struct inode *temp = resolve_path(path,1);
+    // head is new free_blks
+    long temp = free_blks;
+    free_blks = temp->head;
+    fseek(mem_fil,0,SEEK_SET);
+    fprintf(mem_fil, "%ld",free_blks);
+    // last block of the file points to old free_blks
+    block *blk = malloc(sizeof(block));
+    while(read_disk_block(inode->head,blk) != -1)
+    {
+        if (blk->next == -1) {
+            blk->next = temp;
+            write_disk_block(blk);
+            break;
+        }
+    }
+    free(blk);
+    // get rid of the inode
+}
 
 static struct fuse_operations hello_oper = {
         .getattr	= hello_getattr,
@@ -438,7 +460,7 @@ static struct fuse_operations hello_oper = {
         .write      = hello_write,
         .mkdir      = hello_mkdir,
         .create     = hello_create,
-        
+        .unlink     = hello_unlink,
 };
 
 int main(int argc, char *argv[])
