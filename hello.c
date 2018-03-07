@@ -213,8 +213,10 @@ static int hello_open(const char* path, struct fuse_file_info* fi)
     //fh->node = createChild(root, hj+1 ,0); // 0 because we dont want to create a dir
     if(fh->node == NULL)
     {
+        printf("jkdshfkjhsdkjfkjsd\n");
         return -1;
-    }    
+    }
+    printf("uuuuuuuuuuuuuuuuuuuuuuujkdshfkjhsdkjfkjsd\n");
     fi->fh = fh;    
     return 0;
 
@@ -272,6 +274,7 @@ static int hello_write(const char *path, const char *buf, size_t size, off_t off
     int write_blk_offset = 0; //offset within a block
     long block_disk_position = fil->head; // where to write modified blocks back
     printf("seeking to offset!\n");
+    int fil_offset = offset; 
     while(offset>0)
     {
         if(offset>sizeof(write_block->data))
@@ -317,7 +320,7 @@ static int hello_write(const char *path, const char *buf, size_t size, off_t off
                 write_block->data[write_blk_offset+blk_ctr] = '\0';
                 write_disk_block(block_disk_position,write_block);                
                 free(write_block);
-                fil->st_size = temp;
+                fil->st_size = fil_offset + temp;
                 write_disk_inode(fil);
                 return temp; // done writing, return
             }
@@ -343,9 +346,9 @@ static int hello_write(const char *path, const char *buf, size_t size, off_t off
     }
     printf("done writing!\n");
     free(write_block);
+    fil->st_size = fil_offset+temp;
     write_disk_inode(fil);
-    fil->st_size = temp;
-    return temp; 
+    return temp;
 }
 
 int hello_read(const char* path, char *buf, size_t size, off_t offset, struct fuse_file_info* fi)
@@ -432,21 +435,26 @@ int hello_read(const char* path, char *buf, size_t size, off_t offset, struct fu
 int hello_unlink(const char *path)
 {
     // get the inode from the path
-    struct inode *temp = resolve_path(path,1);
+    struct inode *ind = resolve_path(path,1);
     // head is new free_blks
     long temp = free_blks;
-    free_blks = temp->head;
+    free_blks = ind->head;
+    long old_pos = ftell(mem_fil);
     fseek(mem_fil,0,SEEK_SET);
     fprintf(mem_fil, "%ld",free_blks);
+    fseek(mem_fil,old_pos,SEEK_SET);
     // last block of the file points to old free_blks
     block *blk = malloc(sizeof(block));
-    while(read_disk_block(inode->head,blk) != -1)
+    long offset = ind->head;
+    while(read_disk_block(offset,blk) != -1)
     {
+
         if (blk->next == -1) {
             blk->next = temp;
-            write_disk_block(blk);
+            write_disk_block(offset,blk);
             break;
         }
+        offset = blk->next;
     }
     free(blk);
     // get rid of the inode
