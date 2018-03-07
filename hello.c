@@ -461,9 +461,15 @@ int hello_unlink(const char *path)
     }
     free(blk);
 
-    unlink_inode(ind);
+    return unlink_inode(ind); // get rid of the inode
 
-    // get rid of the inode
+   
+}
+
+int hello_truncate( const char *path, size_t size)
+{
+    printf("Truncate called!\n");
+    return 0;
 }
 
 static struct fuse_operations hello_oper = {
@@ -475,6 +481,7 @@ static struct fuse_operations hello_oper = {
         .mkdir      = hello_mkdir,
         .create     = hello_create,
         .unlink     = hello_unlink,
+        .truncate   = hello_truncate,
 };
 
 int main(int argc, char *argv[])

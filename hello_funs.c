@@ -235,6 +235,7 @@ int init_storage()
             if(mem_fil == NULL)
             {
                 printf("Could not create a mem_fil!\n");
+                return -1;
             }
 
 
@@ -247,18 +248,20 @@ int init_storage()
             }
 
             free_blks = DATA_OFFSET; // all blocks are free
-            fseek(mem_fil,0,SEEK_SET);
+            fseek(mem_fil,FREE_BLK,SEEK_SET);
             fprintf(mem_fil,"%ld",free_blks);
+            fseek(mem_fil,DATA_OFFSET,SEEK_SET);
             printf("Could not Seek in file, in init!\n");
             return -1;
         }
 
         free_blks = DATA_OFFSET; // all blocks are free
-        fseek(mem_fil,0,SEEK_SET);
+        fseek(mem_fil,FREE_BLK,SEEK_SET);
         fprintf(mem_fil, "%ld", free_blks);
-        
-        printf("Initializing storage..\n");
+        fseek(mem_fil,DATA_OFFSET,SEEK_SET);
 
+        printf("Initializing storage..\n");
+        
         int mem_size = NUM_BLKS * BLK_SIZE;
         int i = 0; //local counter
 
@@ -360,7 +363,10 @@ int init_storage()
         root = (struct inode *)malloc(sizeof(struct inode));
         read_disk_inode(INODE_OFFSET, root);
         printf("root name: %s\n\n", root->name);
+        long old_pos = ftell(mem_fil);
+        fseek(mem_fil,FREE_BLK,SEEK_SET);
         fscanf(mem_fil,"%ld",&free_blks);
+        fseek(mem_fil,old_pos,SEEK_SET);
         printf("free data blocks start at: %ld\n",free_blks);    
     }
 
@@ -563,4 +569,5 @@ int unlink_inode(struct inode *in) {
     printf("Unlink calledsfsdfsdd!\n");
     write_disk_inode(parent);
     printf("Unlink called!\n");
+    return 0;
 }
